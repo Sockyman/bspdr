@@ -1,0 +1,206 @@
+
+*(arr+(i>>1))
+
+arr(a, i)
+
+; Arithmetic
+
+ADD:
+    lda A
+    add B
+    sta T
+    lda A + 1
+    adc B + 1
+    sta T + 1
+
+SUBTRACT:
+    lda A
+    sub B
+    sta T
+    lda A + 1
+    sbc B + 1
+    sta T + 1
+
+NEGATE:
+    lda A + 1
+    not
+    tax
+    lda A
+    not
+    inc
+    sta T
+    txa
+    adc #0
+    sta T + 1
+
+ASSIGN:
+    lda A
+    sta T
+    lda A + 1
+    sta T + 1
+
+; Equality
+
+EQUAL:
+    lda A
+    cmp B
+    jnz .end
+    lda A + 1
+    sbc B + 1
+.end:
+    tfa
+    and #0b0100 ; Isolate zero flag.
+    sta T
+    sta T + 1
+
+NOT_EQUAL:
+    lda A
+    cmp B
+    jnz .end
+    lda A + 1
+    sbc B + 1
+.end:
+    sta T
+    sta T + 1
+
+; Relational
+
+LESS:
+    lda A
+    cmp B
+    lda A + 1
+    sbc B + 1
+    tfa
+    not
+    and #0b1000 ; Isolate inverted carry flag.
+    sta T
+    sta T + 1
+
+GREATER:
+    lda B
+    cmp A
+    lda B + 1
+    sbc A + 1
+    tfa
+    not
+    and #0b1000 ; Isolate inverted carry flag.
+    sta T
+    sta T + 1
+
+GREATER_OR_EQUAL:
+    lda A
+    cmp B
+    lda A + 1
+    sbc B + 1
+    lda #0
+    rol
+    sta T
+    sta T + 1
+
+LESS_OR_EQUAL:
+    lda B
+    cmp A
+    lda B + 1
+    sbc A + 1
+    lda #0
+    rol
+    sta T
+    sta T + 1
+
+; Logical
+
+LOGICAL_OR:
+    ; resolve A -> CONDITION
+    jnz .end
+    ; resolve B -> CONDITION
+.end:
+    sta T
+    sta T + 1
+
+LOGICAL_AND:
+    ; resolve A -> CONDITION
+    jpz .end
+    ; resolve B -> CONDITION
+.end:
+    sta T
+    sta T + 1
+
+LOGICAL_NOT:
+    ; resolve A -> CONDITION
+    lda #0
+    jnz .end
+    inc
+.end:
+    sta T
+    sta T + 1
+
+; Bitwise
+
+BITWISE_AND:
+    lda A
+    and B
+    sta T
+    lda A + 1
+    and B + 1
+    sta T + 1
+
+BITWISE_OR:
+    lda A
+    ora B
+    sta T
+    lda A + 1
+    ora B + 1
+    sta T + 1
+
+BITWISE_XOR:
+    lda A
+    xor B
+    sta T
+    lda A + 1
+    xor B + 1
+    sta T + 1
+
+BITWISE_NOT:
+    lda A
+    not
+    sta T
+    lda A + 1
+    not
+    sta T + 1
+
+; Shift
+
+LEFT_SHIFT:
+    ldx B
+    lda A
+    ldy A + 1
+.loop:
+    dex
+    jnc .done
+    lsh
+    way
+    rol
+    way
+    jmp .loop
+.done:
+    sta T
+    tya
+    sta T + 1
+
+RIGHT_SHIFT:
+    ldx B
+    lda A
+    ldy A + 1
+.loop:
+    dex
+    jnc .done
+    way
+    rsh
+    way
+    ror
+    jmp .loop
+.done:
+    sta T
+    tya
+    sta T + 1
+

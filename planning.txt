@@ -1,0 +1,84 @@
+
+w = t - (*u + 4)
+
+- resolve(assign{w, difference{t, sum{deref{u}, 4}}}, discard{})
+s1 = resolve(w, any{})
+s2 = resolve(difference{t, sum{deref{u}, 4}}, at{s1})
+return NULL
+
+- resolve(w, any{})
+return w
+
+- resolve(difference{t, sum{deref{u}, 4}}, at{w})
+s1 = resolve(t, any{})
+s2 = resolve(sum{deref{u}, 4}, any{})
+s3 = subtract(s1, s2, w)
+return s3
+
+- resolve(t, any{})
+return t
+
+- resolve(sum{deref{u}, 4}, any{})
+s1 = resolve(deref{u}, any{})
+s2 = resolve(4, any{})
+s3 = add(s1, s2, temp)
+return s3
+
+
+- resolve(deref{u}, any{})
+s1 = resolve(u, any{})
+s2 = do_deref(s1, temp)
+return s2
+
+- resolve(4, any{})
+return 4
+
+- add(s1{tmp}, s2{imm int}, any{})
+unlock(s1)
+s3 = temp()
+aloadlow(s1)
+addlow(s2)
+astorelow(s3)
+aloadhigh(s1)
+addhighcarry(s2)
+astorehigh(s3)
+return s3
+
+
+
+// sym value location atom 
+
+*(a + 4)
+
+
+direct or immediate
+constexpr
+or
+temporary value
+
+
+=== Functions ===
+
+do_move(a, dest)
+do_add(a, b, dest)
+do_subtract(a, b, dest)
+do_deref(a, dest)
+do_address(a, dest)
+
+tempvar()
+deltempvar(sym)
+
+aloads(sym, 0)
+iload(sym)
+astorei()
+iloadn(34)
+aloadt(0, 0)
+astoret(1, 0)
+istores(sym)
+
+putins_imp(str)
+putins_imm(str, sym)
+putins_dir(str, sym)
+putins_ind(str)
+putlabel(sym)
+
