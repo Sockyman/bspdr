@@ -1,0 +1,9 @@
+
+bspdr
+lex.yy.c
+parser.tab.c
+parser.tab.h
+test.bin
+test.bs
+test.spdr
+
