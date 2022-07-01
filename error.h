@@ -1,18 +1,11 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-typedef enum result
-{
-    ERR = 0,
-    OK = 1,
-} result;
+#include "trace.h"
+#include <stdbool.h>
 
-struct error
-{
-    char *text;
-    struct error *next;
-};
-
+void error(Trace *trace, char *format, ...);
+bool is_okay(void);
 
 #endif
 

@@ -1,71 +1,86 @@
 
 %{
-#include "parser.tab.h"
 #include "trace.h"
+#include "parser.tab.h"
+#include "stringliteral.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define YY_USER_ACTION \
+    yylloc = count(yylloc, yytext);
 %}
 
 %option noyywrap
 
 %%
 
-"let"                       { count(yytext); return LET; }
-"return"                    { count(yytext); return RETURN; }
-"if"                        { count(yytext); return IF; }
-"else"                      { count(yytext); return ELSE; }
-"while"                     { count(yytext); return WHILE; }
-"do"                        { count(yytext); return DO; }
-"goto"                      { count(yytext); return GOTO; }
+"let"     { return LET; }
+"return"  { return RETURN; }
+"if"      { return IF; }
+"else"    { return ELSE; }
+"while"   { return WHILE; }
+"do"      { return DO; }
+"for"     { return FOR; }
+"goto"    { return GOTO; }
+"arr"     { return ARRAY_DEC; }
 
 [a-zA-Z_][a-zA-Z0-9_]*  {
-    count(yytext);
     yylval.str = strdup(yytext);
     return IDENTIFIER;
 }
 
 [0-9]+  {
-    count(yytext);
     yylval.integer = atoi(yytext);
     return INTEGER;
 }
 
 0[xX][0-9a-fA-F]+  {
-    count(yytext);
     yylval.integer = strtol(yytext, NULL, 16);
     return INTEGER;
 }
 
 0[bB][01]+  {
-    count(yytext);
     yylval.integer = strtol(yytext + 2, NULL, 2);
     return INTEGER;
+}
+
+\'([^\\\"\'\n]|(\\.))\'  {
+    yylval.integer = parse_character(yytext);
+    return INTEGER;
+}
+
+\"((\\.)|[^\n\'\"\\])*\"  {
+    yylval.str = remove_quotes(yytext);
+    return STRING;
 }
 
 ^#" "[0-9]+" "\".*\"(" "[0-9]+)*\n  {
     int lineno;
     char filename[128];
     sscanf(yytext, "# %d %s", &lineno, filename);
-    trace_set(filename, lineno);
-    fprint_trace(stderr, trace_get());
+    yylloc = trace_new(filename, lineno, 1);
 }
 
-``[ -_a-~\n\t\r]*``         { count(yytext); yylval.str = strdup(yytext); return INLINE_ASM; }
+``[ -_a-~\n\t\r]*``  {
+    yylval.str = strdup(yytext);
+    return INLINE_ASM;
+}
 
-"=="                        { count(yytext); return EQUAL; }
-"<="                        { count(yytext); return LESS_EQ; }
-">="                        { count(yytext); return GREATER_EQ; }
-"!="                        { count(yytext); return NOT_EQ; }
-">>"                        { count(yytext); return SHIFT_R; }
-"<<"                        { count(yytext); return SHIFT_L; }
-"&&"                        { count(yytext); return AND; }
-"||"                        { count(yytext); return OR; }
+"=="     { return EQUAL; }
+"<="     { return LESS_EQ; }
+">="     { return GREATER_EQ; }
+"!="     { return NOT_EQ; }
+">>"     { return SHIFT_R; }
+"<<"     { return SHIFT_L; }
+"&&"     { return AND; }
+"||"     { return OR; }
 
-\n                          { count(yytext); }
-[ \t\r]                     { count(yytext); }
+\n       { }
+[ \t\r]  { }
 
-.                           { count(yytext); return yytext[0]; }
+.        { return yytext[0]; }
 
 %%
 
+/*\'(\\.)|[^\'\"\\]\'  {*/

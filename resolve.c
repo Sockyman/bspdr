@@ -1,6 +1,8 @@
 #include "exprvalue.h"
 #include "assembly.h"
 #include "resolve.h"
+#include "error.h"
+#include <stdlib.h>
 #include <assert.h>
 
 Exval resolve_binary(Ctx *ctx, Expression *expr, ExTarget target)
@@ -23,15 +25,14 @@ Exval resolve_binary_generic(Ctx *ctx, Expression *expr, ExTarget target)
     Exval x = resolve(ctx, expr->value.operative.x, target_any());
     Exval y = resolve(ctx, expr->value.operative.y, target_any());
 
-    if (x.type == EX_IMMEDIATE && y.type == EX_IMMEDIATE
-            && operation_is_constexpr(expr->value.operative.operation))
+    if (is_constexpr(&x, &y, NULL, expr->value.operative.operation))
     {
         return resolve_literal(ctx, expr, target);
     }
 
-    release_temp(x);
-    release_temp(y);
-    Exval t = exval_from_target(target);
+    release_temp(ctx, x);
+    release_temp(ctx, y);
+    Exval t = exval_from_target(ctx, target);
     switch (expr->value.operative.operation)
     {
         case OPER_ADD:
@@ -60,6 +61,12 @@ Exval resolve_binary_generic(Ctx *ctx, Expression *expr, ExTarget target)
             return do_shift(ctx, x, y, t, false);
         case OPER_SHIFT_RIGHT:
             return do_shift(ctx, x, y, t, true);
+        case OPER_MULTIPLY:
+            return do_complex(expr->trace, ctx, x, y, t, "mul");
+        case OPER_DIVIDE:
+            return do_complex(expr->trace, ctx, x, y, t, "div");
+        case OPER_MODULO:
+            return do_complex(expr->trace, ctx, x, y, t, "mod");
         default:
             fprintf(stderr, "Unhandled binary operation.\n");
             return exval_none();
@@ -76,6 +83,8 @@ Exval resolve_unary(Ctx *ctx, Expression *expr, ExTarget target)
             return do_address_of(ctx, expr->value.operative.x, target);
         case OPER_DEREF:
             return do_deref(ctx, expr->value.operative.x, target);
+        case OPER_ASSIGN_BY:
+            return do_assign_by(ctx, expr, target);
         default:
             return resolve_unary_generic(ctx, expr, target);
     }
@@ -84,13 +93,13 @@ Exval resolve_unary(Ctx *ctx, Expression *expr, ExTarget target)
 Exval resolve_unary_generic(Ctx *ctx, Expression *expr, ExTarget target)
 {
     Exval x = resolve(ctx, expr->value.operative.x, target_any());
-    if (x.type == EX_IMMEDIATE && operation_is_constexpr(expr->value.operative.operation))
+    if (is_constexpr(&x, NULL, NULL, expr->value.operative.operation))
     {
         return resolve_literal(ctx, expr, target);
     }
 
-    release_temp(x);
-    Exval t = exval_from_target(target);
+    release_temp(ctx, x);
+    Exval t = exval_from_target(ctx, target);
     switch (expr->value.operative.operation)
     {
         case OPER_BIT_NOT:
@@ -106,6 +115,14 @@ Exval resolve_unary_generic(Ctx *ctx, Expression *expr, ExTarget target)
 
 Exval resolve_symbolic(Ctx *ctx, Expression *expr, ExTarget target)
 {
+    Symbol *symbol = resolve_symbol(ctx, expr->value.symbol);
+    if (!symbol)
+        error(&expr->trace, "\'%s\' is not declared.", expr->value.symbol);
+    else if (symbol->type != VARIABLE)
+        error(&expr->trace, "\'%s\' is not a variable.", expr->value.symbol);
+    else if (!symbol->is_defined)
+        error(&expr->trace, "\'%s\' is not in scope.", expr->value.symbol);
+
     switch (target.type)
     {
         case ANY:
@@ -135,6 +152,71 @@ Exval resolve_literal(Ctx *ctx, Expression *expr, ExTarget target)
     }
 }
 
+Exval resolve_string_literal(Ctx *ctx, Expression *expr, ExTarget target)
+{
+
+    int lbl = alloc_string_literal(ctx, expr->value.symbol);
+    Exval val = exval_section(lbl);
+    if (target.type == ANY)
+        return val;
+    else if (target.type != DISCARD)
+        return do_move(ctx, val, exval_from_target(ctx, target));
+    return exval_none();
+}
+
+Exval resolve_array_alloc(Ctx *ctx, Expression *expr, ExTarget target)
+{
+    int size;
+    if (try_reduce(expr->value.operative.x, &size))
+    {
+        int arr = alloc_array(ctx, size);
+        Exval val = exval_section(arr);
+        if (target.type == ANY)
+            return val;
+        else if (target.type != DISCARD)
+            return do_move(ctx, val, exval_from_target(ctx, target));
+    }
+    else
+    {
+        error(&expr->trace, "array size must be a compile time constant.");
+    }
+    return exval_none();
+}
+
+Exval resolve_literal_array(Ctx *ctx, Expression *expr, ExTarget target)
+{
+    Expression *current = expr->value.operative.x;
+    int size = 0;
+    while (current)
+    {
+        ++size;
+        current = current->next;
+    }
+    int *arr = malloc(sizeof(int) * size);
+
+    current = expr->value.operative.x;
+    for (int i = 0; i < size; ++i)
+    {
+        int val;
+        if (!try_reduce(current, &val))
+        {
+            error(&current->trace, "array literal elements must be compile time constants.");
+            return exval_none();
+        }
+        arr[i] = val;
+        current = current->next;
+    }
+
+    int lbl = alloc_array_literal(ctx, arr, size);
+    Exval val = exval_section(lbl);
+
+    if (target.type == ANY)
+        return val;
+    else if (target.type != DISCARD)
+        return do_move(ctx, val, exval_from_target(ctx, target));
+    return exval_none();
+}
+
 Exval resolve(Ctx *ctx, Expression *expr, ExTarget target)
 {
     switch (expr->type)
@@ -145,17 +227,70 @@ Exval resolve(Ctx *ctx, Expression *expr, ExTarget target)
             return resolve_literal(ctx, expr, target);
         case UNARY_OPERATION:
             return resolve_unary(ctx, expr, target);
+        case TERNARY_CONDITIONAL:
+            return do_ternary(ctx, expr, target);
         case BINARY_OPERATION:
             return resolve_binary(ctx, expr, target);
+        case FUNCTION_CALL:
+            return resolve_function_call(ctx, expr, target);
+        case STRING_LITERAL:
+            return resolve_string_literal(ctx, expr, target);
+        case ARRAY_ALLOC:
+            return resolve_array_alloc(ctx, expr, target);
+        case ARRAY_LITERAL:
+            return resolve_literal_array(ctx, expr, target);
     }
     return exval_none();
 }
 
+Exval resolve_function_call(Ctx *ctx, Expression *expr, ExTarget target)
+{
+    char *name = expr->value.function.name;
+    Expression *arg = expr->value.function.arguments;
+
+    int param = 0;
+    while (arg)
+    {
+        Exval arg_target = exval_param(name, param++);
+        resolve(ctx, arg, target_exval(arg_target));
+        arg = arg->next;
+    }
+
+    return call_function(expr->trace, ctx, target, name, param);
+}
+
+Exval do_complex(Trace trace, Ctx *ctx, Exval x, Exval y, Exval t, char *op)
+{
+    do_move(ctx, x, exval_param(op, 0));
+    do_move(ctx, y, exval_param(op, 1));
+    return call_function(trace, ctx, target_exval(t), op, 2);
+}
+
+Exval call_function(Trace trace, Ctx *ctx, ExTarget target, char *name, int param)
+{
+    Symbol *symbol = resolve_symbol(ctx, name);
+    if (symbol && symbol->type != FUNCTION)
+    {
+        error(&trace, "\'%s\' is not a function.", name);
+    }
+    else if (symbol && symbol->parameters != param)
+    {
+        error(&trace, "\'%s\' declared with different parameters.", name);
+    }
+    else if (!symbol)
+    {
+        symbol = declare_symbol(ctx, FUNCTION, name, param, GLOBAL_SCOPE, false);
+    }
+
+    putins_imp(ctx, "phc");
+    putins_dir_symbol(ctx, "jmp", symbol, 0);
+    return do_move(ctx, exval_return(), exval_from_target(ctx, target));
+}
 
 Exval do_assign(Ctx *ctx, Expression *destination, Expression *source, ExTarget target)
 {
     Exval d;
-    Exval t = exval_from_target(target);
+    Exval t = exval_from_target(ctx, target);
 
     if (destination->type == SYMBOLIC)
     {
@@ -176,7 +311,7 @@ Exval do_assign(Ctx *ctx, Expression *destination, Expression *source, ExTarget 
         }
 
         Exval s = resolve(ctx, source, target_any());
-        release_temp(s);
+        release_temp(ctx, s);
 
         putins_exval(ctx, "ldx", to_deref, 0);
         putins_exval(ctx, "ldy", to_deref, 1);
@@ -197,8 +332,14 @@ Exval do_assign(Ctx *ctx, Expression *destination, Expression *source, ExTarget 
 
         return t;
     }
-    fprintf(stderr, "error: cannot assign to unassignable expression.\n");
+    error(&destination->trace, "cannot assign to unassignable expression.");
     return exval_none();
+}
+
+Exval do_assign_by(Ctx *ctx, Expression *expr, ExTarget target)
+{
+    return do_assign(ctx, expr->value.operative.x->value.operative.x,
+            expr->value.operative.x, target);
 }
 
 Exval do_additive(Ctx *ctx, Exval x, Exval y, Exval t, char *working_ins, char *working_ins_carry)
@@ -215,8 +356,8 @@ Exval do_additive(Ctx *ctx, Exval x, Exval y, Exval t, char *working_ins, char *
 Exval do_deref(Ctx *ctx, Expression *expr, ExTarget target)
 {
     Exval x = resolve(ctx, expr, target_any());
-    release_temp(x);
-    Exval t = exval_from_target(target);
+    release_temp(ctx, x);
+    Exval t = exval_from_target(ctx, target);
     if (x.type == EX_IMMEDIATE)
     {
         x.type = EX_DIRECT;
@@ -287,7 +428,7 @@ Exval do_bitwise(Ctx *ctx, Exval x, Exval y, Exval t, char *working_ins)
 Exval do_logical(Ctx *ctx, Expression *first, Expression *second, ExTarget target, char *working_ins)
 {
     int end_label = anon_label(ctx);
-    Exval t = exval_from_target(target);
+    Exval t = exval_from_target(ctx, target);
 
     resolve(ctx, first, target_condition());
     putins_dir_anon_label(ctx, working_ins, end_label);
@@ -322,7 +463,7 @@ Exval do_equality(Ctx *ctx, Exval x, Exval y, Exval t, bool equal)
 
 Exval do_logical_not(Ctx *ctx, Expression *expr, ExTarget target)
 {
-    Exval t = exval_from_target(target);
+    Exval t = exval_from_target(ctx, target);
 
     resolve(ctx, expr, target_condition());
     putins_imp(ctx, "tfa");
@@ -398,13 +539,44 @@ Exval do_relational(Ctx *ctx, Exval x, Exval y, Exval t, bool equal)
     return x;
 }
 
+Exval do_ternary(Ctx *ctx, Expression *expr, ExTarget target)
+{
+    int val;
+    if (try_reduce(expr->value.ternary.condition, &val))
+    {
+        if (val)
+        {
+            return resolve(ctx, expr->value.ternary.a, target);
+        }
+        else
+        {
+            return resolve(ctx, expr->value.ternary.b, target);
+        }
+    }
+
+    Exval src;
+    Exval dest = exval_from_target(ctx, target);
+
+    int label_alt = anon_label(ctx);
+    int label_end = anon_label(ctx);
+    Exval cond = resolve(ctx, expr->value.ternary.condition, target_condition());
+    putins_dir_anon_label(ctx, "jpz", label_alt);
+    src = resolve(ctx, expr->value.ternary.a, target);
+    do_move(ctx, src, dest);
+    putins_dir_anon_label(ctx, "jmp", label_end);
+    putlabeln(ctx, label_alt);
+    src = resolve(ctx, expr->value.ternary.b, target);
+    do_move(ctx, src, dest);
+    putlabeln(ctx, label_end);
+    return dest;
+}
+
 Exval do_shift(Ctx *ctx, Exval x, Exval y, Exval t, bool right)
 {
     // Shifting by values greater then 255 will cause errors.
 
-    //assert(!right);
-
     if (!right && y.type == EX_IMMEDIATE
+            && y.value.expression->type == LITERAL
             && y.value.expression->value.literal == 1)
     {
         loada(ctx, x, right ? 1 : 0);
@@ -414,6 +586,7 @@ Exval do_shift(Ctx *ctx, Exval x, Exval y, Exval t, bool right)
         putins_imp(ctx, right ? "ror" : "rol");
         storea(ctx, t, right ? 0 : 1);
         return t;
+
     }
 
     int loop_label = anon_label(ctx);

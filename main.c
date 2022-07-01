@@ -2,31 +2,52 @@
 #include "assembly.h"
 #include "parser.tab.h"
 #include "resolve.h"
+#include "token.h"
+#include "compile.h"
+#include "context.h"
+#include "trace.h"
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 
-Expression *global_expression;
-extern Ctx g_ctx;
+extern Token *g_token;
 
-int main()
+void put_file(FILE *file)
 {
-    /*puts(
-        "%section data\n"
-        "_condition:\n\t%res 1\n"
-        "foo:\n\t%res 2\n"
-        "bar:\n\t%res 2\n"
-        "baz:\n\t%res 2\n"
-        "_t_0:\n\t%res 1\n"
-        "_t_1:\n\t%res 2\n"
-        "_t_2:\n\t%res 2\n"
-        "_t_3:\n\t%res 2\n"
-        "_t_4:\n\t%res 2\n"
-        "_t_5:\n\t%res 2\n"
-        "%section text\n"
-        );*/
+    int c;
+    rewind(file);
+    while ((c = getc(file)) != EOF)
+        putchar(c);
+}
 
-    g_ctx = create_context(stdout);
+int main(int argc, char **argv)
+{
+    FILE *text = tmpfile();
+    FILE *const_output = tmpfile();
+    FILE *data = tmpfile();
+
+    g_token = NULL;
+
+    Ctx ctx = create_context(text, data, const_output);
+
     yyparse();
+    compile_program(&ctx, g_token);
+    if (g_token)
+        free_token(g_token);
+    free_filenames();
+    free_symbols(ctx.globals);
+
+    if (!is_okay())
+        return 1;
+
+    put_file(text);
+    put_file(const_output);
+    put_file(data);
+
+    fclose(text);
+    fclose(const_output);
+    fclose(data);
+
     return 0;
 }
 

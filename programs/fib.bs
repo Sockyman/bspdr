@@ -1,0 +1,19 @@
+#include <out.bs>
+
+#define MAX_NUMBER 255
+
+main()
+{
+    let a;
+    let b = 0;
+    let c = 1;
+
+    while (c <= MAX_NUMBER)
+    {
+        out(c);
+        a = b;
+        b = c;
+        c = a + b;
+    }
+}
+

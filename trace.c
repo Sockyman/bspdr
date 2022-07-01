@@ -7,8 +7,10 @@ int filename_count = 0;
 char *filename_cache[FILENAME_CACHE_SIZE];
 Trace global_trace = { "", 0, 0 };
 
-Trace trace_new(char *filename, int lineno, int charno)
+Trace trace_new(char *filename, int first_line, int first_column)
 {
+    filename[strlen(filename) - 1] = '\0';
+    filename = filename + 1;
     char *file = NULL;
     if (filename_count > FILENAME_CACHE_SIZE)
     {
@@ -28,14 +30,7 @@ Trace trace_new(char *filename, int lineno, int charno)
         filename_cache[filename_count++] = file = strdup(filename);
     }
 
-    Trace trace = { file, lineno, charno };
-    return trace;
-}
-
-Trace trace_advance(Trace trace, int lines, int chars)
-{
-    trace.lineno += lines;
-    trace.charno += chars;
+    Trace trace = { file, first_line, first_line, first_column, first_column };
     return trace;
 }
 
@@ -52,37 +47,35 @@ void fprint_trace(FILE *file, Trace trace)
     char *name = trace.filename;
     if (!name)
     {
-        name = "STDIN";
+        name = "stdin";
     }
-    fprintf(file, "%s:%d:%d", name, trace.lineno, trace.charno);
+    fprintf(file, "%s:%d:%d", name, trace.first_line, trace.first_column);
 }
 
-
-Trace trace_get(void)
+Trace count(Trace trace, char *text)
 {
-    return global_trace;
-}
-
-Trace count(char *text)
-{
+    trace.first_column = trace.last_column;
+    trace.first_line = trace.last_line;
     for (int i = 0; i < strlen(text); ++i)
     {
         if (text[i] == '\n')
         {
-            ++global_trace.lineno;
-            global_trace.charno = 0;
+            ++trace.last_line;
+            trace.last_column = 1;
         }
         else
         {
-            ++global_trace.charno;
+            ++trace.last_column;
         }
     }
-    return global_trace;
+    return trace;
 }
 
-Trace trace_set(char *filename, int lineno)
+Trace trace_span(Trace trace_1, Trace trace_2)
 {
-    global_trace = trace_new(filename, lineno, 0);
-    return global_trace;
+    Trace trace = trace_1;
+    trace.last_line = trace_2.last_line;
+    trace.last_column = trace_2.last_column;
+    return trace;
 }
 

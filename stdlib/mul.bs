@@ -1,0 +1,49 @@
+#ifndef MUL_BS
+#define MUL_BS
+
+mul(x, y)
+{
+    let shift_bit;
+``
+    lda #1
+    sta .shift_bit
+    lda #0
+    sta .shift_bit + 1
+    sta _return
+    sta _return + 1
+    ldx #16
+.loop:
+    lda .shift_bit
+    bit .x
+    jnz .do_add
+    lda .shift_bit + 1
+    bit .x+1
+    jpz .shift
+.do_add:
+    lda .y
+    add _return
+    sta _return
+    lda .y+1
+    add _return + 1
+    sta _return + 1
+.shift:
+    lda .shift_bit
+    lsh
+    sta .shift_bit
+    lda .shift_bit + 1
+    rol
+    sta .shift_bit + 1
+    lda .y
+    lsh
+    sta .y
+    lda .y + 1
+    rol
+    sta .y + 1
+    dex
+    jnz .loop
+.end:
+``
+}
+
+#endif
+

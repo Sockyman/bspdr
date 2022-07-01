@@ -1,0 +1,13 @@
+#ifndef OUT_BS
+#define OUT_BS
+
+out(x)
+{
+``
+    lda out.x
+    out
+``
+}
+
+#endif
+

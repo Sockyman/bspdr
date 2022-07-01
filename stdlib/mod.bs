@@ -1,0 +1,27 @@
+#ifndef MOD_BS
+#define MOD_BS
+
+#include <math/div_base.bs>
+
+mod(x, y)
+{
+``
+    lda .x
+    sta div_base.x
+    lda .x + 1
+    sta div_base.x + 1
+    lda .y
+    sta div_base.y
+    lda .y + 1
+    sta div_base.y + 1
+    phc
+    jmp div_base
+    lda div_base.remainder
+    sta _return
+    lda div_base.remainder + 1
+    sta _return + 1
+``
+}
+
+#endif
+
