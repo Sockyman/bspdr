@@ -1,0 +1,16 @@
+#ifndef COPY_BS
+#define COPY_BS
+
+copy(dest, source, num)
+{
+    num = dest + (num << 1);
+    while (dest < num)
+    {
+        *dest = *source;
+        dest += 2;
+        source += 2;
+    }
+}
+
+#endif
+

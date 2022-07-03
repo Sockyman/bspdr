@@ -1,0 +1,12 @@
+#ifndef LT_BS
+#define LT_BS
+
+#include <math/signed.bs>
+
+lt(x, y)
+{
+    return is_negative(x - y);
+}
+
+#endif
+

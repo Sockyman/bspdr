@@ -1,0 +1,30 @@
+#include <lcd/lcd_init.bs>
+#include <lcd/putc.bs>
+#include <lcd/cursor.bs>
+#include <lcd/clear.bs>
+#include <mem/set.bs>
+#include <in.bs>
+
+#define SYMBOLS arr (' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', 'x', 0xfd, '(', ')')
+#define SYMBOL_COUNT 17
+
+#define MAX_INPUT_STRING 16
+
+let input_string;
+
+main()
+{
+    lcd_init(LCD_DISPLAY_CURSOR);
+
+    input_string = arr [MAX_INPUT_STRING];
+    set(input_string, 0, MAX_INPUT_STRING);
+
+    while (1)
+    {
+        let input = in();
+
+    }
+}
+
+
+

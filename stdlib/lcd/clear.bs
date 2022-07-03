@@ -1,0 +1,11 @@
+#ifndef CLEAR_BS
+#define CLEAR_BS
+
+#include <lcd/lcd_def.bs>
+#include <lcd/lcd_command.bs>
+
+#define clear() \
+    lcd_command(LCD_CLEAR);
+
+#endif
+

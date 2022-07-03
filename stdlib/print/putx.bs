@@ -1,0 +1,51 @@
+#ifndef PUTX_BS
+#define PUTX_BS
+
+putxb(n)
+{
+``
+    lda .n
+    rsh
+    rsh
+    rsh
+    rsh
+    add #.hex_values
+    tax
+    lda #.hex_values >> 8
+    adc #0
+    tay
+    lda x, y
+    lcd
+
+    lda .n
+    and #0b00001111
+    add #.hex_values
+    tax
+    lda #.hex_values >> 8
+    adc #0
+    tay
+    lda x, y
+    lcd
+    ret
+
+.hex_values:
+    %byte "0123456789abcdef"
+``
+}
+
+putx(n)
+{
+``
+    lda .n + 1
+    sta putxb.n
+    phc
+    jmp putxb
+    lda .n
+    sta putxb.n
+    phc
+    jmp putxb
+``
+}
+
+#endif
+

@@ -1,0 +1,28 @@
+#ifndef STRLEN_BS
+#define STRLEN_BS
+
+strlen(str)
+{
+``
+    ldx .str
+    ldy .str + 1
+.loop:
+    lda x, y
+    cmp #0
+    jpz .end
+    inx
+    jnc .loop
+    iny
+    jmp .loop
+.end:
+    txa
+    sub .str
+    sta _return
+    tya
+    sbc .str + 1
+    sta _return + 1
+``
+}
+
+#endif
+

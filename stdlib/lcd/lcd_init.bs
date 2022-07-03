@@ -1,0 +1,16 @@
+#ifndef LCD_INIT_BS
+#define LCD_INIT_BS
+
+#include <lcd/lcd_def.bs>
+#include <lcd/lcd_command.bs>
+
+lcd_init(display)
+{
+    lcd_command(LCD_FUNCTION);
+    lcd_command(LCD_DISPLAY | display);
+    lcd_command(LCD_ENTRY | LCD_ENTRY_INCREMENT);
+    lcd_command(LCD_CLEAR);
+}
+
+#endif
+

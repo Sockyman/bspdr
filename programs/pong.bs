@@ -1,0 +1,85 @@
+#include <lcd/lcd_init.bs>
+#include <lcd/cursor.bs>
+#include <print/putc.bs>
+#include <math/signed.bs>
+#include <bitmap.bs>
+#include <in.bs>
+
+#define WIDTH 20
+#define HEIGHT 16
+#define PADDLE_HEIGHT 5
+
+#define PADDLE_START_Y (HEIGHT / 2) - (PADDLE_HEIGHT / 2)
+
+#define PADDLE_0_X 1
+#define PADDLE_1_X (WIDTH - 1 - PADDLE_0_X)
+
+
+main()
+{
+    lcd_init(0);
+    render();
+    clear_screen();
+    
+    cursor(0, 4);
+    putc(0xff);
+    cursor(1, 4);
+    putc(0xff);
+
+    let paddle_0_y, paddle_1_y = PADDLE_START_Y;
+
+    let ball_x = WIDTH / 2;
+    let ball_y = HEIGHT / 2;
+
+    let mov_x = 1;
+    let mov_y = 0;
+
+    draw_paddle(PADDLE_0_X);
+    draw_paddle(PADDLE_1_X);
+
+    while (1)
+    {
+        let input = in();
+        paddle_0_y = move_paddle(paddle_0_y, PADDLE_0_X, input & 0b00010000, input & 0b00100000);
+        paddle_1_y = move_paddle(paddle_1_y, PADDLE_1_X, input & 0b10000000, input & 0b01000000);
+
+        redraw();
+    }
+}
+
+draw_paddle(x_pos)
+{
+    for (let i = PADDLE_START_Y; i < (PADDLE_START_Y + PADDLE_HEIGHT); i += 1)
+    {
+        set_pixel(x_pos, i, 1);
+    }
+}
+
+move_paddle(paddle_y, paddle_x, up, down)
+{
+    let erase_y;
+    let set_y;
+
+    if (down)
+    {
+        if (paddle_y == (HEIGHT - PADDLE_HEIGHT))
+            return paddle_y;
+        erase_y = paddle_y;
+        set_y = paddle_y + PADDLE_HEIGHT;
+        paddle_y += 1;
+    }
+    else if (up)
+    {
+        if (paddle_y == 0)
+            return paddle_y;
+        paddle_y -= 1;
+        erase_y = paddle_y + PADDLE_HEIGHT;
+        set_y = paddle_y;
+    }
+    else
+        return paddle_y;
+    set_pixel(paddle_x, erase_y, 0);
+    set_pixel(paddle_x, set_y, 1);
+    return paddle_y;
+}
+

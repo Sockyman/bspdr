@@ -1,0 +1,41 @@
+#ifndef PUTD_BS
+#define PUTD_BS
+
+#include <math/div_base.bs>
+
+putd(n)
+{
+``
+    lda .n
+    sta div_base.x
+    lda .n + 1
+    sta div_base.x + 1
+    lda #10
+    sta div_base.y
+    ldy #0
+    sty div_base.y + 1
+.get_digit:
+    phy
+    phc
+    jmp div_base
+    ply
+    lda div_base.remainder
+    pha
+    iny
+    lda div_base.x
+    sub #0
+    jnz .get_digit
+    lda div_base.x + 1
+    sub #0
+    jnz .get_digit
+.print:
+    pla
+    add #'0'
+    lcd
+    dey
+    jnz .print
+``
+}
+
+#endif
+

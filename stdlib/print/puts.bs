@@ -1,0 +1,24 @@
+#ifndef PUTS_BS
+#define PUTS_BS
+
+puts(str)
+{
+``
+    ldx .str
+    ldy .str + 1
+.loop:
+    lda x, y
+    bit #0xff
+    jnz .continue
+    ret
+.continue:
+    lcd
+    inx
+    jnc .loop
+    iny
+    jmp .loop
+``
+}
+
+#endif
+

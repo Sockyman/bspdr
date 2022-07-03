@@ -1,0 +1,16 @@
+#ifndef IN_BS
+#define IN_BS
+
+in()
+{
+``
+    inp
+    not
+    sta _return
+    lda #0
+    sta _return + 1
+``
+}
+
+#endif
+

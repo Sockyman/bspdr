@@ -1,0 +1,19 @@
+#ifndef STRCMP_BS
+#define STRCMP_BS
+
+#include <memcmp.bs>
+#include <strlen.bs>
+
+strcmp(str1, str2)
+{
+    let len1 = strlen(str1);
+    let len2 = strlen(str2);
+    if (len1 > len2)
+    {
+        len1 = len2;
+    }
+    return memcmp(str1, str2, len1);
+}
+
+#endif
+

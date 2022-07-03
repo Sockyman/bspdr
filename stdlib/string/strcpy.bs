@@ -1,0 +1,37 @@
+#ifndef STRCPY_BS
+#define STRCPY_BS
+
+strcpy(dest, src)
+{
+``
+.loop:
+    ldx .src
+    ldy .src + 1
+    lda x, y
+    wax
+    inc
+    sta .src
+    tya
+    adc #0
+    sta .src + 1
+    txa
+
+    ldx .dest
+    ldy .dest + 1
+    sta x, y
+    cmp #0
+    jpz .end
+
+    txa
+    inc
+    sta .dest
+    tya
+    adc #0
+    sta .dest + 1
+    jmp .loop
+.end:
+``
+}
+
+#endif
+

@@ -1,0 +1,12 @@
+#ifndef GT_BS
+#define GT_BS
+
+#include <math/signed.bs>
+
+gt(x, y)
+{
+    return (!is_negative(x - y)) && (x != y);
+}
+
+#endif
+

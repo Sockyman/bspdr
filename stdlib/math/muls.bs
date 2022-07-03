@@ -1,0 +1,30 @@
+#ifndef MULS_BS
+#define MULS_BS
+
+#include <math/signed.bs>
+#include <mul.bs>
+
+muls(x, y)
+{
+    let result_sign = 0;
+    if (is_negative(x))
+    {
+        result_sign ^ 1;
+        x = -x;
+    }
+    if (is_negative(y))
+    {
+        result_sign ^ 1;
+        y = -y;
+    }
+
+    x = x * y;
+    if (result_sign)
+    {
+        x = -x;
+    }
+    return -x;
+}
+
+#endif
+

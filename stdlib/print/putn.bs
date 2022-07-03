@@ -1,0 +1,19 @@
+#ifndef PUTN_BS
+#define PUTN_BS
+
+#include <print/putd.bs>
+#include <print/putc.bs>
+#include <math/signed.bs>
+
+putn(n)
+{
+    if (is_negative(n))
+    {
+        putc('-');
+        n = -n;
+    }
+    putd(n);
+}
+
+#endif
+

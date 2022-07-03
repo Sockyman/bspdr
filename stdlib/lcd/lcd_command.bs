@@ -1,0 +1,15 @@
+#ifndef LCD_COMMAND_BS
+#define LCD_COMMAND_BS
+
+#include <lcd/lcd_def.bs>
+
+lcd_command(command)
+{
+``
+    lda .command
+    lcc
+``
+}
+
+#endif
+

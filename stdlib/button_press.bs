@@ -1,0 +1,19 @@
+#include <in.bs>
+
+button_press()
+{
+    let input;
+    do
+    {
+        input = in();
+    }
+    while (!(input & 0xf0));
+
+    let release;
+    do
+    {
+        release = in();
+    }
+    while (release & 0xf0);
+}
+

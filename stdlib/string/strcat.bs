@@ -1,0 +1,11 @@
+#ifndef STRCAT_BS
+#define STRCAT_BS
+
+#include <strlen.bs>
+#include <strcpy.bs>
+
+#define strcat(dest, src) \
+    strcpy(dest + strlen(dest), src);
+
+#endif
+

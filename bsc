@@ -1,0 +1,152 @@
+#!/bin/bash
+
+HELP_TEXT="Usage:
+  bsc [options] [file]
+
+Options:
+  -h, --help
+  -o, --output <file>
+  -l, --stdlib <directory>
+  -c, --compile
+  -a, --assemble
+  -u, --upload
+  -s, --stdin
+  -v, --version"
+
+VERSION="bsc 1.0"
+
+BSTDLIB="$HOME/src/bspdr/stdlib"
+
+SHORT=o:,l:,s,u,h,v,n,a,c
+LONG=output:,stdlib:,stdin,upload,help,version,assemble,compile
+OPTS=$(getopt -n bsc --options "$SHORT" --longoptions "$LONG" -- "$@")
+
+if [ "$?" != "0" ]
+then
+    exit 1
+fi
+
+eval set -- "$OPTS"
+
+while :
+do
+    case "$1" in
+        -o | --output )
+            OUTFILE="$2"
+            shift 2
+            ;;
+        -l | --stdlib )
+            BSTDLIB="$2"
+            shift 2
+            ;;
+        -h | --help )
+            echo "$HELP_TEXT"
+            shift
+            exit
+            ;;
+        -v | --version )
+            echo "$VERSION"
+            shift
+            exit
+            ;;
+        -a | --assemble )
+            ASSEMBLE=1
+            shift
+            ;;
+        -c | --compile )
+            COMPILE=1
+            shift
+            ;;
+        -s | --stdin )
+            USESTDIN=1
+            shift
+            ;;
+        -u | --upload )
+            UPLOAD=1
+            shift
+            ;;
+        -- )
+            shift
+            break
+            ;;
+        * )
+            >&2 echo bsc: argument parse error.
+            exit 1
+            shift
+            ;;
+    esac
+done
+
+if [ -n "$1" ]
+then
+    INFILE="$1"
+else
+    if [ -z "$USESTDIN" ]
+    then
+        >&2 echo "bsc: no input file"
+        exit 1
+    fi
+fi
+
+if [ -z "$COMPILE" ] && [ -z "$ASSEMBLE" ]
+then
+    COMPILE=1
+    ASSEMBLE=1
+fi
+
+
+ASMTMP="/tmp/temp.spdr"
+COMPILETMP="/tmp/temp.spdr.out"
+
+if [ -n "$COMPILE" ]
+then
+    ASMFILE="$ASMTMP"
+else
+    if [ -n "$INFILE" ]
+    then
+        ASMFILE="$INFILE"
+    else
+        cat > "$ASMTMP"
+        ASMFILE="$ASMTMP"
+    fi
+fi
+
+if [ -n "$COMPILE" ]
+then
+    cpp -nostdinc -isystem "$BSTDLIB" "$INFILE" |
+        bspdr > "$ASMTMP"
+fi 
+
+if (( $? != 0 ))
+then
+    exit 1
+fi
+
+
+if  [ -n "$ASSEMBLE" ]
+then
+    spas "$ASMFILE"
+else
+    cat "$ASMFILE"
+fi > $COMPILETMP
+
+if (( $? != 0 ))
+then
+    exit 1
+fi
+
+cat $COMPILETMP |
+    if [ -n "$OUTFILE" ]
+    then
+        cat > "$OUTFILE"
+    else
+        if [ -n "$UPLOAD" ]
+        then
+            eeprom-program $COMPILETMP
+        else
+            cat
+        fi
+    fi
+
+exit $?
+
