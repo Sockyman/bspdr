@@ -219,7 +219,7 @@ void compile_condition(Ctx *ctx, Token *token)
     int end_lbl = anon_label(ctx);
     int else_lbl = anon_label(ctx);
     compile_expression(ctx, token->expr, target_condition());
-    putins_dir_anon_label(ctx, "jpz", token->statements_other ? else_lbl : end_lbl);
+    putins_dir_anon_label(ctx, "jz", token->statements_other ? else_lbl : end_lbl);
     compile(ctx, token->statements);
     if (token->statements_other)
     {
@@ -240,7 +240,7 @@ void compile_loop(Ctx *ctx, Token *token)
     {
         int end_label = anon_label(ctx);
         compile_expression(ctx, token->expr, target_condition());
-        putins_dir_anon_label(ctx, "jpz", end_label);
+        putins_dir_anon_label(ctx, "jz", end_label);
         compile(ctx, token->statements);
         putins_dir_anon_label(ctx, "jmp", loop_label);
         putlabeln(ctx, end_label);
@@ -264,7 +264,7 @@ void compile_for(Ctx *ctx, Token *token)
     compile(ctx, token->statements);
     putlabeln(ctx, loop_label);
     compile_expression(ctx, token->expr, target_condition());
-    putins_dir_anon_label(ctx, "jpz", end_label);
+    putins_dir_anon_label(ctx, "jz", end_label);
     compile(ctx, token->statements_other);
     compile_expression(ctx, token->expr_other, target_discard());
     putins_dir_anon_label(ctx, "jmp", loop_label);

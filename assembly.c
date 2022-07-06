@@ -147,7 +147,7 @@ void storea(Ctx *ctx, Exval exval, int offset)
                 }
                 else
                 {
-                    putins_dir_str(ctx, "ora", "_condition", 0);
+                    putins_dir_str(ctx, "or", "_condition", 0);
                 }
             }
             break;

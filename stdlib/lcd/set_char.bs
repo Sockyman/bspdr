@@ -11,24 +11,24 @@ set_char(char, data)
     lsh
     lsh
     lsh
-    ora #LCD_CGRAM
+    or #LCD_CGRAM
     sta .char
     lda #7
 .loop:
     sta .line
-    ora .char
+    or  .char
     lcc
     lda .data
     add .line
     tax
     lda .data + 1
-    adc #0
+    addc #0
     tay
     lda x, y
     lcd
     lda .line
     dec
-    jpc .loop
+    jc  .loop
     lda #LCD_DDRAM
     lcc
 ``

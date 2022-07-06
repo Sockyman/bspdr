@@ -12,7 +12,7 @@ Exval resolve_binary(Ctx *ctx, Expression *expr, ExTarget target)
         case OPER_ASSIGN:
             return do_assign(ctx, expr->value.operative.x, expr->value.operative.y, target);
         case OPER_LOG_AND:
-            return do_logical(ctx, expr->value.operative.x, expr->value.operative.y, target, "jpz");
+            return do_logical(ctx, expr->value.operative.x, expr->value.operative.y, target, "jz");
         case OPER_LOG_OR:
             return do_logical(ctx, expr->value.operative.x, expr->value.operative.y, target, "jnz");
         default:
@@ -36,13 +36,13 @@ Exval resolve_binary_generic(Ctx *ctx, Expression *expr, ExTarget target)
     switch (expr->value.operative.operation)
     {
         case OPER_ADD:
-            return do_additive(ctx, x, y, t, "add", "adc");
+            return do_additive(ctx, x, y, t, "add", "addc");
         case OPER_SUBTRACT:
-            return do_additive(ctx, x, y, t, "sub", "sbc");
+            return do_additive(ctx, x, y, t, "sub", "subc");
         case OPER_BIT_AND:
             return do_bitwise(ctx, x, y, t, "and");
         case OPER_BIT_OR:
-            return do_bitwise(ctx, x, y, t, "ora");
+            return do_bitwise(ctx, x, y, t, "or");
         case OPER_BIT_XOR:
             return do_bitwise(ctx, x, y, t, "xor");
         case OPER_LESS:
@@ -449,7 +449,7 @@ Exval do_equality(Ctx *ctx, Exval x, Exval y, Exval t, bool equal)
     putins_exval(ctx, "cmp", y, 0);
     putins_dir_anon_label(ctx, "jnz", end_label);
     loada(ctx, x, 1);
-    putins_exval(ctx, "sbc", y, 1);
+    putins_exval(ctx, "subc", y, 1);
     putlabeln(ctx, end_label);
     if (equal)
     {
@@ -504,7 +504,7 @@ Exval do_negate(Ctx *ctx, Exval x, Exval t)
     putins_imp(ctx, "inc");
     storea(ctx, t, 0);
     putins_imp(ctx, "txa");
-    putins_imm_int(ctx, "adc", 0);
+    putins_imm_int(ctx, "addc", 0);
     storea(ctx, t, 1);
     return t;
 }
@@ -526,7 +526,7 @@ Exval do_relational(Ctx *ctx, Exval x, Exval y, Exval t, bool equal)
     loada(ctx, x, 0);
     putins_exval(ctx, "cmp", y, 0);
     loada(ctx, x, 1);
-    putins_exval(ctx, "sbc", y, 1);
+    putins_exval(ctx, "subc", y, 1);
     putins_imp(ctx, "tfa");
     if (!equal)
     {
@@ -560,7 +560,7 @@ Exval do_ternary(Ctx *ctx, Expression *expr, ExTarget target)
     int label_alt = anon_label(ctx);
     int label_end = anon_label(ctx);
     Exval cond = resolve(ctx, expr->value.ternary.condition, target_condition());
-    putins_dir_anon_label(ctx, "jpz", label_alt);
+    putins_dir_anon_label(ctx, "jz", label_alt);
     src = resolve(ctx, expr->value.ternary.a, target);
     do_move(ctx, src, dest);
     putins_dir_anon_label(ctx, "jmp", label_end);
@@ -603,15 +603,15 @@ Exval do_shift(Ctx *ctx, Exval x, Exval y, Exval t, bool right)
     if (!right)
     {
         putins_imp(ctx, "lsh");
-        putins_imp(ctx, "way");
+        putins_imp(ctx, "xay");
         putins_imp(ctx, "rol");
-        putins_imp(ctx, "way");
+        putins_imp(ctx, "xay");
     }
     else
     {
-        putins_imp(ctx, "way");
+        putins_imp(ctx, "xay");
         putins_imp(ctx, "rsh");
-        putins_imp(ctx, "way");
+        putins_imp(ctx, "xay");
         putins_imp(ctx, "ror");
     }
 

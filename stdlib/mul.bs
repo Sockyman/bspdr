@@ -18,7 +18,7 @@ mul(x, y)
     jnz .do_add
     lda .shift_bit + 1
     bit .x+1
-    jpz .shift
+    jz .shift
 .do_add:
     lda .y
     add _return

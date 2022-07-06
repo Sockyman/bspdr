@@ -4,7 +4,7 @@
 in()
 {
 ``
-    inp
+    in
     not
     sta _return
     lda #0

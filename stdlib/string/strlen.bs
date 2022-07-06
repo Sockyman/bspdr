@@ -9,7 +9,7 @@ strlen(str)
 .loop:
     lda x, y
     cmp #0
-    jpz .end
+    jz .end
     inx
     jnc .loop
     iny
@@ -19,7 +19,7 @@ strlen(str)
     sub .str
     sta _return
     tya
-    sbc .str + 1
+    subc .str + 1
     sta _return + 1
 ``
 }

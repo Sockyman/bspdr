@@ -28,7 +28,7 @@ div_base(x, y)
     sub .y
     tay
     lda .remainder + 1
-    sbc .y + 1
+    subc .y + 1
     jnc .next
     ; Store subtracted value as remainder
     sty .remainder
