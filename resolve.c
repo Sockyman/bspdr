@@ -559,7 +559,7 @@ Exval do_ternary(Ctx *ctx, Expression *expr, ExTarget target)
 
     int label_alt = anon_label(ctx);
     int label_end = anon_label(ctx);
-    Exval cond = resolve(ctx, expr->value.ternary.condition, target_condition());
+    resolve(ctx, expr->value.ternary.condition, target_condition());
     putins_dir_anon_label(ctx, "jz", label_alt);
     src = resolve(ctx, expr->value.ternary.a, target);
     do_move(ctx, src, dest);

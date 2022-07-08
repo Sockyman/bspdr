@@ -12,7 +12,7 @@ putxb(n)
     add #.hex_values
     tax
     lda #.hex_values >> 8
-    adc #0
+    addc #0
     tay
     lda x, y
     lcd
@@ -22,7 +22,7 @@ putxb(n)
     add #.hex_values
     tax
     lda #.hex_values >> 8
-    adc #0
+    addc #0
     tay
     lda x, y
     lcd

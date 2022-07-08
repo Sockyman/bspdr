@@ -104,6 +104,7 @@ declaration_list
 declaration
     : function
     | variable_declaration ';'
+    | inline_assembly
     ;
 
 function
