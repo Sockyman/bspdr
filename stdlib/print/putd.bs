@@ -16,8 +16,7 @@ putd(n)
     sty div_base.y + 1
 .get_digit:
     phy
-    phc
-    jmp div_base
+    call div_base
     ply
     lda div_base.remainder
     pha

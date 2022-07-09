@@ -18,8 +18,7 @@ void compile_program(Ctx *ctx, Token *token)
     set_output(ctx, OUT_TEXT);
 
     putlabel(ctx, "_reset");
-    putins_imp(ctx, "phc");
-    putins_dir_str(ctx, "jmp", "main", 0);
+    putins_dir_str(ctx, "call", "main", 0);
     putins_imp(ctx, "hlt");
 
     declare_symbol(ctx, FUNCTION, "main", 0, GLOBAL_SCOPE, false);

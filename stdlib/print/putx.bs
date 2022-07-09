@@ -38,12 +38,10 @@ putx(n)
 ``
     lda .n + 1
     sta putxb.n
-    phc
-    jmp putxb
+    call putxb
     lda .n
     sta putxb.n
-    phc
-    jmp putxb
+    call putxb
 ``
 }
 
