@@ -11,14 +11,15 @@ Options:
   -a, --assemble
   -u, --upload
   -s, --stdin
+  -y, --symbols
   -v, --version"
 
 VERSION="bsc 1.0"
 
 BSTDLIB="$HOME/src/bspdr/stdlib"
 
-SHORT=o:,l:,s,u,h,v,n,a,c
-LONG=output:,stdlib:,stdin,upload,help,version,assemble,compile
+SHORT=o:,l:,s,u,h,v,n,a,c,y
+LONG=output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols
 OPTS=$(getopt -n bsc --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 if [ "$?" != "0" ]
@@ -63,6 +64,10 @@ do
             ;;
         -u | --upload )
             UPLOAD=1
+            shift
+            ;;
+        -y | --symbols )
+            SYMBOLS_FLAG="-y"
             shift
             ;;
         -- )
@@ -125,7 +130,7 @@ fi
 
 if  [ -n "$ASSEMBLE" ]
 then
-    spas "$ASMFILE"
+    spas "$ASMFILE" $SYMBOLS_FLAG
 else
     cat "$ASMFILE"
 fi > $COMPILETMP

@@ -5,7 +5,7 @@
 #include <print/putd.bs>
 #include <mem/set.bs>
 #include <bitmap.bs>
-#include <in.bs>
+//#include <in.bs>
 #include <out.bs>
 #include <rand.bs>
 #include <mod.bs>
@@ -20,6 +20,11 @@ let board;
 let segments_x, segments_y;
 let x_apple, y_apple;
 let input;
+
+in()
+{
+    return 0;
+}
 
 main()
 {
