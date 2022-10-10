@@ -82,7 +82,10 @@ void putins_dir_anon_label(Ctx *ctx, char *name, int label)
     char *funct = function_in(ctx);
     fprintf(output(ctx), "\t%s ", name);
     if (funct)
-        fprintf(output(ctx), "%s.", funct);
+    {
+        putfunctionname(output(ctx), funct);
+        fprintf(output(ctx), ".");
+    }
     fprintf(output(ctx), "_lbl_%d\n", label);
 }
 
@@ -102,7 +105,8 @@ void putins_dir(Ctx *ctx, char *name, Expression *expr, int offset)
 void putins_dir_temp(Ctx *ctx, char *name, int temp_index, int offset)
 {
     fprintf(output(ctx), "\t%s ", name);
-    fprintf(output(ctx), "%s.%s_%d", ctx->funct.name, "_tmp", temp_index);
+    putfunctionname(output(ctx), ctx->funct.name);
+    fprintf(output(ctx), ".%s_%d", "_tmp", temp_index);
     fprintf(output(ctx), " + %d\n", offset);
 }
 
@@ -114,8 +118,9 @@ void putins_imm_int(Ctx *ctx, char *name, int value)
 
 void putins_param(Ctx *ctx, char *name, char *function, int index, int offset)
 {
-    fprintf(output(ctx), "\t%s %s._param_%d + %d\n", name, function, index, offset);
-
+    fprintf(output(ctx), "\t%s ", name);
+    putfunctionname(output(ctx), function);
+    fprintf(output(ctx), "._param_%d + %d\n", index, offset);
 }
 
 void putins_return(Ctx *ctx, char *name, int offset)
@@ -167,11 +172,25 @@ void putlabel(Ctx *ctx, char *name)
     fprintf(output(ctx), "%s:\n", name);
 }
 
+void putlabel_function(Ctx *ctx, char *name)
+{
+    putfunctionname(output(ctx), name);
+    fprintf(output(ctx), ":\n");
+}
+
+void putfunctionname(FILE *file, char *name)
+{
+    fprintf(file, "%s_", name);
+}
+
 void putlabeln(Ctx *ctx, int n)
 {
     char *funct = function_in(ctx);
     if (funct)
-        fprintf(output(ctx), "%s.", funct);
+    {
+        putfunctionname(output(ctx), funct);
+        fprintf(output(ctx), ".");
+    }
     fprintf(output(ctx), "_lbl_%d:\n", n);
 }
 
@@ -190,4 +209,3 @@ void putreserve(Ctx *ctx, int words)
 {
     fprintf(output(ctx), "\t%%res %d\n", words * 2);
 }
-

@@ -3,7 +3,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-syn keyword bsKeyword let return if else while do for goto arr
+syn keyword bsKeyword let return if else while do for goto arr extern include_asm
 
 syn match bsDoubleQuoteEscape /\\[\\"$\n]/ contained
 syn region bsString start=/"/ skip=/\v(\\{2})|(\\)"/ end=/"/ contains=bsDoubleQuoteEscape

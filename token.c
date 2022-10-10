@@ -18,6 +18,7 @@ Token *new_token(Trace trace, TokenType type, char *name, Expression *expr,
     token->statements = statements;
     token->statements_other = statements_other;
     token->ids = ids;
+    token->is_extern = false;
     return token;
 }
 
@@ -64,10 +65,11 @@ Token *token_expression(Trace trace, Expression *expr)
     return new_token(trace, TOK_EXPR, NULL, expr, NULL, NULL, NULL);
 }
 
-Token *token_variable(Trace trace, StringList *ids, Expression *length)
+Token *token_variable(Trace trace, StringList *ids, Expression *length, bool is_extern)
 {
     Token *token = new_token(trace, TOK_VARIABLE, NULL, NULL, NULL, NULL, ids);
     token->expr_other = length;
+    token->is_extern = is_extern;
     return token;
 }
 
@@ -113,6 +115,20 @@ Token *token_assembly(Trace trace, char *text)
 Token *token_function(Trace trace, char *name, StringList *parameters, Token *statements)
 {
     return new_token(trace, TOK_FUNCTION, name, NULL, statements, NULL, parameters);
+}
+
+Token *token_extern_function(Trace trace, char *name, char *extern_name, AsmPlace *params, AsmPlace *return_place)
+{
+    Token *token = new_token(trace, TOK_EXTERN_FUNCTION, name, NULL, NULL, NULL, NULL);
+    token->extern_name = extern_name;
+    token->asm_params = params;
+    token->asm_return = return_place;
+    return token;
+}
+
+Token *token_include_asm(Trace trace, char *file_name)
+{
+    return new_token(trace, TOK_INCLUDE_ASM, file_name, NULL, NULL, NULL, NULL);
 }
 
 StringList *new_stringlist(char *str)

@@ -37,11 +37,11 @@ putx(n)
 {
 ``
     lda .n + 1
-    sta putxb.n
-    call putxb
+    sta putxb_.n
+    call putxb_
     lda .n
-    sta putxb.n
-    call putxb
+    sta putxb_.n
+    call putxb_
 ``
 }
 

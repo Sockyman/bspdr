@@ -227,7 +227,10 @@ int alloc_array(Ctx *ctx, int size)
 void fprint_symbol(FILE *file, Symbol *symbol)
 {
     if (symbol->function)
-        fprintf(file, "%s.", symbol->function);
+    {
+        putfunctionname(file, symbol->function);
+        fprintf(file, ".");
+    }
     fprintf(file, "%s", symbol->name);
 }
 

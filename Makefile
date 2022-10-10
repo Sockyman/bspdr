@@ -4,7 +4,7 @@ all:
 	bison -d parser.y
 	gcc -g -Wall -o bspdr main.c expression.c assembly.c resolve.c compile.c \
 		exprvalue.c context.c lex.yy.c parser.tab.c token.c trace.c error.c \
-		stringliteral.c
+		stringliteral.c external.c
 
 install:
 	cp bspdr ~/.local/bin/bspdr

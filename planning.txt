@@ -1,4 +1,14 @@
 
+include_asm("std:multiply_16.spdr")
+
+extern foo; // Defines an external variable.
+extern mul("multiply_16", {"math.x", "math.y"}, X:Y)
+
+extern printn("printn", {X:Y});
+
+
+
+
 w = t - (*u + 4)
 
 - resolve(assign{w, difference{t, sum{deref{u}, 4}}}, discard{})

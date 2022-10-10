@@ -4,6 +4,7 @@
     #include "expression.h"
     #include "trace.h"
     #include "token.h"
+    #include "external.h"
 }
 
 %debug
@@ -17,6 +18,7 @@
 #include "token.h"
 #include "trace.h"
 #include "error.h"
+#include "external.h"
 #include "stringliteral.h"
 #include <stdio.h>
 #include <string.h>
@@ -49,7 +51,7 @@ int yyerror(const char *s);
 
 %}
 
-%token IDENTIFIER "identifier" STRING "string" INTEGER "integer"
+%token IDENTIFIER "identifier" STRING "string" INTEGER "integer" REGISTER EXTERN INCLUDE_ASM
 %token IF "if" ELSE "else" WHILE "while" DO "do" GOTO "goto" FOR "for"
 %token LET "let" RETURN "return" ARRAY_DEC "array"
 %token EQUAL "==" LESS_EQ "<=" GREATER_EQ ">=" NOT_EQ "!="
@@ -60,9 +62,12 @@ int yyerror(const char *s);
 {
     Expression *expr;
     char *str;
+    char character;
     int integer;
     Token *token;
     StringList *str_list;
+    AsmPlace *aplace;
+    AsmLocation alocation;
 }
 
 %type <expr> expression expression_list expression_list_body paren_expression symbol_expression
@@ -71,8 +76,12 @@ int yyerror(const char *s);
 %type <token> statement_list statement condition_statement
 %type <token> non_condition_statement compound_statement inline_assembly
 %type <token> variable_initialize variable_declaration loop_statement function
-%type <token> declaration declaration_list
+%type <token> declaration declaration_list asm_include extern_variable extern_function
 %type <str_list> string_list string_list_nullable
+%type <character> REGISTER
+%type <alocation> asm_location
+%type <aplace> asm_place asm_place_list
+
 
 %right '='
 %right '?'
@@ -104,12 +113,42 @@ declaration_list
 declaration
     : function
     | variable_declaration ';'
+    | extern_variable ';'
     | inline_assembly
+    | extern_function
+    | asm_include
+    ;
+
+asm_include
+    : INCLUDE_ASM strings ';' { $$ = token_include_asm(@$, $2); free($2); }
     ;
 
 function
     : IDENTIFIER '(' string_list_nullable ')' statement  { $$ = token_function(@$, $1, $3, $5); free($1); }
     ;
+
+extern_function
+    : EXTERN IDENTIFIER '(' strings ',' '{' asm_place_list '}' ',' asm_place ')' ';'    { $$ = token_extern_function(@$, $2, $4, $7, $10); }
+    | EXTERN IDENTIFIER '(' strings ',' '{' asm_place_list '}' ')' ';'                  { $$ = token_extern_function(@$, $2, $4, $7, NULL); }
+    ;
+
+asm_place_list
+    : %empty                        { $$ = NULL; }
+    | asm_place
+    | asm_place_list ',' asm_place  { $$ = place_append_list($1, $3); }
+    ;
+
+asm_place
+    : asm_location ':' asm_location     { $$ = place_double($1, $3); }
+    | strings                           { $$ = place_single($1); }
+    ;
+
+asm_location
+    : REGISTER      { $$ = location_register($1); }
+    | strings       { $$ = location_string($1); }
+    | %empty        { $$ = location_none(); }
+    ;
+
 
 statement_list
     : statement_list statement  { $$ = cat_token($1, $2); }
@@ -152,8 +191,12 @@ variable_initialize
     ;
 
 variable_declaration
-    : "let" string_list  { $$ = token_variable(@$, $2, NULL); }
-    | "let" string_list '[' expression ']' { token_variable(@$, $2, $4); }
+    : "let" string_list  { $$ = token_variable(@$, $2, NULL, false); }
+    | "let" string_list '[' expression ']' { token_variable(@$, $2, $4, false); }
+    ;
+
+extern_variable
+    : EXTERN variable_declaration { $2->is_extern = true; $$ = $2; }
     ;
 
 string_list_nullable

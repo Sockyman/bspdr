@@ -6,7 +6,6 @@
 #include "assembly.h"
 #include <stdio.h>
 
-
 void compile_program(Ctx *ctx, Token *token)
 {
     set_output(ctx, OUT_DATA);
@@ -18,7 +17,9 @@ void compile_program(Ctx *ctx, Token *token)
     set_output(ctx, OUT_TEXT);
 
     putlabel(ctx, "_reset");
-    putins_dir_str(ctx, "call", "main", 0);
+    fprintf(output(ctx), "\tcall ");
+    putfunctionname(output(ctx), "main");
+    fprintf(output(ctx), "\n");
     putins_imp(ctx, "hlt");
 
     declare_symbol(ctx, FUNCTION, "main", 0, GLOBAL_SCOPE, false);
@@ -76,26 +77,24 @@ void compile(Ctx *ctx, Token *token)
             case TOK_FUNCTION:
                 compile_function(ctx, t);
                 break;
+            case TOK_INCLUDE_ASM:
+                compile_include_asm(ctx, t);
+                break;
+            case TOK_EXTERN_FUNCTION:
+                compile_extern_function(ctx, t);
+                break;
         }
         t = t->next;
     }
 }
 
-void compile_function(Ctx *ctx, Token *token)
+void compile_include_asm(Ctx *ctx, Token *token)
 {
-    enter_function(ctx, token->name);
+    fprintf(output(ctx), "%%include_once \"%s\"\n", token->name);
+}
 
-    int pcount = 0;
-    StringList *param = token->ids;
-    while (param)
-    {
-        set_output(ctx, OUT_DATA);
-        fprintf(output(ctx), "%s._param_%d:\n", token->name, pcount++);
-        set_output(ctx, OUT_TEXT);
-        declare_variable(ctx, token->trace, param->str);
-        param = param->next;
-    }
-
+void begin_function(Ctx *ctx, Token *token, int pcount)
+{
     Symbol *symbol = resolve_symbol(ctx, token->name);
     if (symbol && symbol->is_defined)
     {
@@ -115,14 +114,34 @@ void compile_function(Ctx *ctx, Token *token)
                 pcount, GLOBAL_SCOPE, true);
     }
 
-    putlabel(ctx, token->name);
+    putlabel_function(ctx, token->name);
+}
+
+void compile_function(Ctx *ctx, Token *token)
+{
+    enter_function(ctx, token->name);
+
+    int pcount = 0;
+    StringList *param = token->ids;
+    while (param)
+    {
+        set_output(ctx, OUT_DATA);
+        putfunctionname(output(ctx), token->name);
+        fprintf(output(ctx), "._param_%d:\n", pcount++);
+        set_output(ctx, OUT_TEXT);
+        declare_variable(ctx, token->trace, param->str, false);
+        param = param->next;
+    }
+    begin_function(ctx, token, pcount);
+
     compile(ctx, token->statements);
     putins_imp(ctx, "ret");
 
     set_output(ctx, OUT_DATA);
     for (int i = 0; i < ctx->funct.max_temps; ++i)
     {
-        fprintf(output(ctx), "%s._tmp_%d:\n", token->name, i);
+        putfunctionname(output(ctx), token->name);
+        fprintf(output(ctx), "._tmp_%d:\n", i);
         putreserve(ctx, 1);
     }
     set_output(ctx, OUT_TEXT);
@@ -140,6 +159,123 @@ void compile_function(Ctx *ctx, Token *token)
 
     leave_scope(ctx);
 }
+
+
+void compile_extern_function(Ctx *ctx, Token *token)
+{
+    enter_function(ctx, token->name);
+
+    int pcount = 0;
+    AsmPlace *param_place = token->asm_params;
+    while (param_place)
+    {
+        set_output(ctx, OUT_DATA);
+        putfunctionname(output(ctx), token->name);
+        fprintf(output(ctx), "._param_%d", pcount++);
+
+        if (param_place->one_location)
+        {
+            fprintf(output(ctx), " = %s\n", param_place->locations[0].str);
+        }
+        else
+        {
+            fprintf(output(ctx), ":\n");
+            putreserve(ctx, 1);
+        }
+
+        set_output(ctx, OUT_TEXT);
+        param_place = param_place->next;
+    }
+    begin_function(ctx, token, pcount);
+
+    int p_number = 0;
+    AsmPlace *param = token->asm_params;
+    while (param)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            if (param->one_location)
+            {
+                fprintf(output(ctx), "\tlda ");
+                putfunctionname(output(ctx), token->name);
+                fprintf(output(ctx), "._param_%d + %d\n", p_number, i);
+                putins_dir_str(ctx, "sta", param->locations[0].str, i);
+            }
+            else
+            {
+                AsmLocation *loc = &param->locations[i];
+                if (loc->type == LOCATION_STR)
+                {
+                    fprintf(output(ctx), "\tlda ");
+                    putfunctionname(output(ctx), token->name);
+                    fprintf(output(ctx), "._param_%d + %d\n", p_number, i);
+                    fprintf(output(ctx), "\tsta %s\n", loc->str);
+                }
+            }
+        }
+        
+        param = param->next;
+        ++p_number;
+    }
+
+    p_number = 0;
+    param = token->asm_params;
+    while (param)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            AsmLocation *loc = &param->locations[i];
+            if (loc->type == LOCATION_REG)
+            {
+                fprintf(output(ctx), "\tld%c ", loc->reg);
+                putfunctionname(output(ctx), token->name);
+                fprintf(output(ctx), "._param_%d + %d\n", p_number, i);
+            }
+        }
+        
+        param = param->next;
+        ++p_number;
+    }
+
+    fprintf(output(ctx), "\tcall %s\n", token->extern_name);
+
+    if (token->asm_return->one_location)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            putins_dir_str(ctx, "lda", token->asm_return->locations[0].str, i);
+            putins_dir_str(ctx, "sta", "_return", i);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            AsmLocation *loc = &token->asm_return->locations[i];
+            if (loc->type == LOCATION_REG)
+            {
+                fprintf(output(ctx), "\tst%c _return + %d\n", loc->reg, i);
+            }
+        }
+        for (int i = 0; i < 2; ++i)
+        {
+            AsmLocation *loc = &token->asm_return->locations[i];
+            if (loc->type == LOCATION_STR)
+            {
+                putins_dir_str(ctx, "lda", loc->str, 0);
+                putins_dir_str(ctx, "sta", "_return", i);
+            }
+            else if (loc->type == LOCATION_NONE)
+            {
+                putins_imm_int(ctx, "lda", 0);
+                putins_dir_str(ctx, "sta", "_return", i);
+            }
+        }
+    }
+
+    putins_imp(ctx, "ret");
+}
+
 
 void compile_compound(Ctx *ctx, Token *token)
 {
@@ -164,7 +300,7 @@ void compile_expression_token(Ctx *ctx, Token *token)
     compile_expression(ctx, token->expr, target_discard());
 }
 
-void declare_variable(Ctx *ctx, Trace trace, char *name)
+void declare_variable(Ctx *ctx, Trace trace, char *name, bool is_extern)
 {
     Symbol *symbol = resolve_symbol(ctx, name);
     if (symbol)
@@ -182,10 +318,13 @@ void declare_variable(Ctx *ctx, Trace trace, char *name)
     else
     {
         symbol = declare_symbol(ctx, VARIABLE, name, 0, CURRENT_SCOPE, true);
-        set_output(ctx, OUT_DATA);
-        putlabel_symbol(ctx, symbol);
-        putreserve(ctx, 1);
-        set_output(ctx, OUT_TEXT);
+        if (!is_extern)
+        {
+            set_output(ctx, OUT_DATA);
+            putlabel_symbol(ctx, symbol);
+            putreserve(ctx, 1);
+            set_output(ctx, OUT_TEXT);
+        }
     }
 }
 
@@ -194,7 +333,7 @@ void compile_variable(Ctx *ctx, Token *token)
     StringList *current = token->ids;
     while (current)
     {
-        declare_variable(ctx, token->trace, current->str);
+        declare_variable(ctx, token->trace, current->str, token->is_extern);
         current = current->next;
     }
     if (token->expr)
@@ -321,4 +460,3 @@ void compile_assembly(Ctx *ctx, Token *token)
     fprintf(output(ctx), "%s\n", token->name);
     fprintf(output(ctx), "; (end inline asm) %s:%d\n", token->trace.filename, token->trace.last_line);
 }
-

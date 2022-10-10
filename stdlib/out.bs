@@ -4,7 +4,7 @@
 out(x)
 {
 ``
-    lda out.x
+    lda .x
     out
 ``
 }

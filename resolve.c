@@ -282,7 +282,9 @@ Exval call_function(Trace trace, Ctx *ctx, ExTarget target, char *name, int para
         symbol = declare_symbol(ctx, FUNCTION, name, param, GLOBAL_SCOPE, false);
     }
 
-    putins_dir_symbol(ctx, "call", symbol, 0);
+    fprintf(output(ctx), "\tcall ");
+    putfunctionname(output(ctx), symbol->name);
+    fprintf(output(ctx), "\n");
     return do_move(ctx, exval_return(), exval_from_target(ctx, target));
 }
 

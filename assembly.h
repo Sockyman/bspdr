@@ -23,6 +23,9 @@ void putins_dir_anon_label_global(Ctx *ctx, char *name, int label);
 void putins_dir_sec(Ctx *ctx, char *name, int index, int offset);
 void putins_imm_sec(Ctx *ctx, char *name, int index, int offset);
 
+// void putins_reg_dir(Ctx *ctx, char *prefix, char reg, char *value, int offset);
+// void putins_reg_imm(Ctx *ctx, char *prefix, char reg, char *value, int offset);
+
 void putins_param(Ctx *ctx, char *name, char *function, int index, int offset);
 void putins_return(Ctx *ctx, char *name, int offset);
 
@@ -30,6 +33,8 @@ void loada(Ctx *ctx, Exval exval, int offset);
 void storea(Ctx *ctx, Exval exval, int offset);
 
 void putlabel(Ctx *ctx, char *name);
+void putlabel_function(Ctx *ctx, char *name);
+void putfunctionname(FILE *file, char *name);
 void putlabel_symbol(Ctx *ctx, Symbol *symbol);
 void putlabeln(Ctx *ctx, int n);
 void putlabeln_global(Ctx *ctx, int n);

@@ -24,6 +24,23 @@
 "for"     { return FOR; }
 "goto"    { return GOTO; }
 "arr"     { return ARRAY_DEC; }
+"extern"  { return EXTERN; }
+"include_asm" { return INCLUDE_ASM; }
+
+"A" {
+    yylval.character = 'a';
+    return REGISTER;
+}
+
+"X" {
+    yylval.character = 'x';
+    return REGISTER;
+}
+
+"Y" {
+    yylval.character = 'y';
+    return REGISTER;
+}
 
 [a-zA-Z_][a-zA-Z0-9_]*  {
     yylval.str = strdup(yytext);

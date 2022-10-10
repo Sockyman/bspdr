@@ -5,7 +5,6 @@
 #include <print/putd.bs>
 #include <mem/set.bs>
 #include <bitmap.bs>
-//#include <in.bs>
 #include <out.bs>
 #include <rand.bs>
 #include <mod.bs>
@@ -19,12 +18,6 @@
 let board;
 let segments_x, segments_y;
 let x_apple, y_apple;
-let input;
-
-in()
-{
-    return 0;
-}
 
 main()
 {
@@ -41,8 +34,8 @@ main()
 
     board = arr [BOARD_WIDTH * BOARD_HEIGHT];
     set(board, EMPTY, BOARD_WIDTH * BOARD_HEIGHT);
-    segments_x = arr [256];
-    segments_y = arr [256];
+    segments_x = arr [0x100];
+    segments_y = arr [0x100];
 
     let length = 1;
     set_score(length);
@@ -58,7 +51,6 @@ main()
     place_apple();
 
     /// Game loop
-    // TODO: Split into multiple functions.
 
     while (1)
     {
@@ -92,7 +84,6 @@ main()
             }
         }
         input = 0;
-        poll();
 
         /// Game logic
 
@@ -138,9 +129,7 @@ main()
         /// Rendering
 
         // Poll for input occasionally so that inputs are not missed.
-        poll();
         redraw();
-        poll();
         // Redraw twice to add delay.
         // TODO: Add delay in a better way.
         redraw();
@@ -176,11 +165,6 @@ place_apple()
     }
     while (board[index] != EMPTY);
     set_pixel(x_apple, y_apple, 1);
-}
-
-poll()
-{
-    input = input | in();
 }
 
 set_score(score)

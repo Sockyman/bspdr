@@ -1,0 +1,50 @@
+
+#define FUNCT_NAME(n) mul_##n
+
+FUNCT_NAME(MUL_ARG)
+{
+    let product;
+``
+    lda .x
+    ldx .x + 1
+
+#define DONE 0
+#define MUL_NEXT 1
+
+; Unit
+#if !DONE
+    #define BIT_TEST MUL_NEXT
+    #undef MUL_NEXT
+    
+    #if MUL_ARG & 0b1
+        sta .x
+        stx .x + 1
+        add .product
+        sta .product + 1
+        txa
+        addc .product + 1
+        sta .product + 1
+        lda .x
+        ldx .x + 1
+    #endif
+        lsh
+        xax
+        rol
+        xax
+    
+    #define MUL_NEXT BIT_TEST << 1
+    #undef BIT_TEST
+    
+    #if !(MUL_ARG & (BIT_TEST - 1))
+        #undef DONE
+        #define DONE 1
+    #endif
+#endif
+; End Unit
+
+``
+    return product;
+}
+
+#undef MUL_ARG
+
