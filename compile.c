@@ -239,41 +239,45 @@ void compile_extern_function(Ctx *ctx, Token *token)
 
     fprintf(output(ctx), "\tcall %s\n", token->extern_name);
 
-    if (token->asm_return->one_location)
+    if (token->asm_return)
     {
-        for (int i = 0; i < 2; ++i)
+        if (token->asm_return->one_location)
         {
-            putins_dir_str(ctx, "lda", token->asm_return->locations[0].str, i);
-            putins_dir_str(ctx, "sta", "_return", i);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < 2; ++i)
-        {
-            AsmLocation *loc = &token->asm_return->locations[i];
-            if (loc->type == LOCATION_REG)
+            for (int i = 0; i < 2; ++i)
             {
-                fprintf(output(ctx), "\tst%c _return + %d\n", loc->reg, i);
-            }
-        }
-        for (int i = 0; i < 2; ++i)
-        {
-            AsmLocation *loc = &token->asm_return->locations[i];
-            if (loc->type == LOCATION_STR)
-            {
-                putins_dir_str(ctx, "lda", loc->str, 0);
+                putins_dir_str(ctx, "lda", token->asm_return->locations[0].str, i);
                 putins_dir_str(ctx, "sta", "_return", i);
             }
-            else if (loc->type == LOCATION_NONE)
+        }
+        else
+        {
+            for (int i = 0; i < 2; ++i)
             {
-                putins_imm_int(ctx, "lda", 0);
-                putins_dir_str(ctx, "sta", "_return", i);
+                AsmLocation *loc = &token->asm_return->locations[i];
+                if (loc->type == LOCATION_REG)
+                {
+                    fprintf(output(ctx), "\tst%c _return + %d\n", loc->reg, i);
+                }
+            }
+            for (int i = 0; i < 2; ++i)
+            {
+                AsmLocation *loc = &token->asm_return->locations[i];
+                if (loc->type == LOCATION_STR)
+                {
+                    putins_dir_str(ctx, "lda", loc->str, 0);
+                    putins_dir_str(ctx, "sta", "_return", i);
+                }
+                else if (loc->type == LOCATION_NONE)
+                {
+                    putins_imm_int(ctx, "lda", 0);
+                    putins_dir_str(ctx, "sta", "_return", i);
+                }
             }
         }
     }
 
     putins_imp(ctx, "ret");
+    leave_scope(ctx);
 }
 
 

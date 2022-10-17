@@ -16,7 +16,8 @@ Options:
 
 VERSION="bsc 1.0"
 
-BSTDLIB="$HOME/src/bspdr/stdlib"
+BSTDLIB="$HOME/src/spdr-software/stdlib/bs"
+ASMSTDLIB="$HOME/src/spdr-software/stdlib/asm/"
 
 SHORT=o:,l:,s,u,h,v,n,a,c,y
 LONG=output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols
@@ -130,7 +131,7 @@ fi
 
 if  [ -n "$ASSEMBLE" ]
 then
-    spas "$ASMFILE" $SYMBOLS_FLAG
+    spas "$ASMFILE" $SYMBOLS_FLAG -l "$ASMSTDLIB"
 else
     cat "$ASMFILE"
 fi > $COMPILETMP

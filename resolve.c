@@ -397,7 +397,7 @@ Exval do_address_of(Ctx *ctx, Expression *expr, ExTarget target)
     }
     else
     {
-        fprintf(stderr, "Cannot take address.\n");
+        error(&expr->trace, "cannot determine address of value.");
         return exval_none();
     }
 
