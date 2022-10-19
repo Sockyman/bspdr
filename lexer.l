@@ -11,7 +11,7 @@
     yylloc = count(yylloc, yytext);
 %}
 
-%option noyywrap
+%option noyywrap noinput nounput
 
 %%
 
