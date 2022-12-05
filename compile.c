@@ -9,7 +9,7 @@
 void compile_program(Ctx *ctx, Token *token)
 {
     set_output(ctx, OUT_DATA);
-    fprintf(output(ctx), "%%section data\n");
+    fprintf(output(ctx), "section data\n");
     putlabel(ctx, "_condition");
     putreserve(ctx, 1);
     putlabel(ctx, "_return");
@@ -90,7 +90,7 @@ void compile(Ctx *ctx, Token *token)
 
 void compile_include_asm(Ctx *ctx, Token *token)
 {
-    fprintf(output(ctx), "%%include_once \"%s\"\n", token->name);
+    fprintf(output(ctx), "include_once \"%s\"\n", token->name);
 }
 
 void begin_function(Ctx *ctx, Token *token, int pcount)
@@ -192,16 +192,14 @@ void compile_extern_function(Ctx *ctx, Token *token)
     AsmPlace *param = token->asm_params;
     while (param)
     {
-        for (int i = 0; i < 2; ++i)
+        if (param->one_location)
         {
-            if (param->one_location)
-            {
-                fprintf(output(ctx), "\tlda ");
-                putfunctionname(output(ctx), token->name);
-                fprintf(output(ctx), "._param_%d + %d\n", p_number, i);
-                putins_dir_str(ctx, "sta", param->locations[0].str, i);
-            }
-            else
+            putfunctionname(output(ctx), token->name);
+            fprintf(output(ctx), "._param_%d = %s\n", p_number, param->locations[0].str);
+        }
+        else
+        {
+            for (int i = 0; i < 2; ++i)
             {
                 AsmLocation *loc = &param->locations[i];
                 if (loc->type == LOCATION_STR)

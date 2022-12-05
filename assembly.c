@@ -207,5 +207,5 @@ void putlabel_symbol(Ctx *ctx, Symbol *symbol)
 
 void putreserve(Ctx *ctx, int words)
 {
-    fprintf(output(ctx), "\t%%res %d\n", words * 2);
+    fprintf(output(ctx), "res %d\n", words * 2);
 }

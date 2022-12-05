@@ -4,6 +4,7 @@ if exists("b:current_syntax")
 endif
 
 syn keyword bsKeyword let return if else while do for goto arr extern include_asm
+syn keyword bsRegister A X Y
 
 syn match bsDoubleQuoteEscape /\\[\\"$\n]/ contained
 syn region bsString start=/"/ skip=/\v(\\{2})|(\\)"/ end=/"/ contains=bsDoubleQuoteEscape
@@ -43,6 +44,7 @@ hi def link bsInclude Special
 hi def link bsSysInclude Special
 hi def link bsDirective	Special
 hi def link bsOperator Operator
+hi def link bsRegister Operator
 
 hi def link bsLabel Label
 

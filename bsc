@@ -19,8 +19,8 @@ VERSION="bsc 1.0"
 BSTDLIB="$HOME/src/spdr-software/stdlib/bs"
 ASMSTDLIB="$HOME/src/spdr-software/stdlib/asm/"
 
-SHORT=o:,l:,s,u,h,v,n,a,c,y
-LONG=output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols
+SHORT="o:,l:,s,u,h,v,n,a,c,y"
+LONG="output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols"
 OPTS=$(getopt -n bsc --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 if [ "$?" != "0" ]

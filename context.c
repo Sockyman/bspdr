@@ -159,7 +159,7 @@ int alloc_string_literal(Ctx *ctx, char *str)
     set_output(ctx, OUT_CONST);
     putlabeln_global(ctx, lbl);
     //fprintf(output(ctx), "; \"%s\"\n", str);
-    fprintf(output(ctx), "\t%%byte ");
+    fprintf(output(ctx), "byte ");
     fprint_string_bytes(output(ctx), str);
     set_output(ctx, OUT_TEXT);
     return lbl;
@@ -202,7 +202,7 @@ int alloc_array_literal(Ctx *ctx, int *arr, int size)
     *cur = section;
     set_output(ctx, OUT_CONST);
     putlabeln_global(ctx, lbl);
-    fprintf(output(ctx), "\t%%word ");
+    fprintf(output(ctx), "word ");
     for (int i = 0; i < size; ++i)
     {
         if (i != 0)

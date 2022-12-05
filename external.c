@@ -40,12 +40,10 @@ AsmPlace *place_single(char *str)
 
 AsmPlace *place_append_list(AsmPlace *list, AsmPlace *to_append)
 {
-    fprintf(stderr, "here\n");
     AsmPlace *curr = list;
     while (curr->next)
     {
         curr = curr->next;
-        fprintf(stderr, "next: %p\n", curr->next);
     }
     curr->next = to_append;
     return list;
