@@ -26,6 +26,8 @@
 "arr"     { return ARRAY_DEC; }
 "extern"  { return EXTERN; }
 "include_asm" { return INCLUDE_ASM; }
+"switch"    { return SWITCH; }
+"case"      { return CASE; }
 
 "A" {
     yylval.character = 'a';

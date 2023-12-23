@@ -4,10 +4,9 @@
 #include <stdio.h>
 
 Token *new_token(Trace trace, TokenType type, char *name, Expression *expr,
-        Token *statements, Token *statements_other, StringList *ids)
+    Token *statements, Token *statements_other, StringList *ids)
 {
-    Token *token = malloc(sizeof(Token));
-    token->trace = trace;
+    Token *token = malloc(sizeof(Token)); token->trace = trace;
     token->type = type;
     if (name)
         token->name = strdup(name);
@@ -81,7 +80,7 @@ Token *token_condition(Trace trace, Expression *expr, Token *tokens, Token *toke
 Token *token_loop(Trace trace, Expression *expr, Token *tokens, bool reverse_order)
 {
     return new_token(trace, TOK_LOOP, NULL, expr,
-            reverse_order ? NULL : tokens, reverse_order ? tokens : NULL, NULL);
+        reverse_order ? NULL : tokens, reverse_order ? tokens : NULL, NULL);
 }
 
 Token *token_for(Trace trace, Token *init_statement, Expression *expr_check, Expression *expr_end, Token *loop_statement)
@@ -129,6 +128,18 @@ Token *token_extern_function(Trace trace, char *name, char *extern_name, AsmPlac
 Token *token_include_asm(Trace trace, char *file_name)
 {
     return new_token(trace, TOK_INCLUDE_ASM, file_name, NULL, NULL, NULL, NULL);
+}
+
+Token *token_switch(Trace trace, Expression *expr, Token *statements)
+{
+    return new_token(trace, TOK_SWITCH, NULL, expr, statements, NULL, NULL);
+}
+
+Token *token_case(Trace trace, Expression *expr, Token *statements, bool continue_after)
+{
+    Token *token = new_token(trace, TOK_CASE, NULL, expr, statements, NULL, NULL);
+    token->continue_after = continue_after;
+    return token;
 }
 
 StringList *new_stringlist(char *str)

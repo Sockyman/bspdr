@@ -32,6 +32,7 @@ Expression *expression_binary(Trace trace, enum Operation operation, Expression 
     expr->value.operative.operation = operation;
     expr->value.operative.x = x;
     expr->value.operative.y = y;
+    expr->value.operative.is_array_access = false;
     return expr;
 }
 
@@ -40,6 +41,7 @@ Expression *expression_unary(Trace trace, enum Operation operation, Expression *
     Expression *expr = alloc_expression(trace, UNARY_OPERATION);
     expr->value.operative.operation = operation;
     expr->value.operative.x = x;
+    expr->value.operative.is_array_access = false;
     return expr;
 }
 
@@ -249,10 +251,10 @@ char *get_operator(enum Operation operation)
             return "/";
         case OPER_MODULO:
             return "%";
-        /*case OPER_ADDRESS:
-            return "-1&"; // Wacky so it can be handled by assembler.
+        case OPER_ADDRESS:
+            return "&"; // Wacky so it can be handled by assembler.
         case OPER_DEREF:
-            return "1*"; // Similar reason.*/
+            return "*"; // Similar reason.*/
         default:
             return "";
     }
@@ -304,13 +306,15 @@ void fprint_expression(FILE *file, Ctx *ctx, Expression *expr)
 
 Expression *expression_array(Trace trace, Expression *x, Expression *y)
 {
-    return expression_unary(trace, OPER_DEREF,
+    Expression *expr = expression_unary(trace, OPER_DEREF,
         expression_binary(trace, OPER_ADD,
             x,
             expression_binary(trace, OPER_SHIFT_LEFT,
                 y,
                 expression_literal(trace, 1)
             )));
+    expr->value.operative.is_array_access = true;
+    return expr;
 }
 
 Expression *expression_assign_by(Trace trace, enum Operation operation, Expression *x, Expression *y)

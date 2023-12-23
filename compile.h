@@ -20,6 +20,7 @@ void compile_for(Ctx *ctx, Token *token);
 void compile_goto(Ctx *ctx, Token *token);
 void compile_label(Ctx *ctx, Token *token);
 void compile_return(Ctx *ctx, Token *token);
+void compile_switch(Ctx *ctx, Token *token);
 void compile_assembly(Ctx *ctx, Token *token);
 void compile_function(Ctx *ctx, Token *token);
 void compile_extern_function(Ctx *ctx, Token *token);

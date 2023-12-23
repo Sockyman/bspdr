@@ -53,7 +53,7 @@ int yyerror(const char *s);
 
 %token IDENTIFIER "identifier" STRING "string" INTEGER "integer" REGISTER EXTERN INCLUDE_ASM
 %token IF "if" ELSE "else" WHILE "while" DO "do" GOTO "goto" FOR "for"
-%token LET "let" RETURN "return" ARRAY_DEC "array"
+%token LET "let" RETURN "return" ARRAY_DEC "array" SWITCH "switch" CASE "case"
 %token EQUAL "==" LESS_EQ "<=" GREATER_EQ ">=" NOT_EQ "!="
 %token SHIFT_R ">>" SHIFT_L "<<" AND "&&" OR "||"
 %token INLINE_ASM "assembly"
@@ -77,6 +77,7 @@ int yyerror(const char *s);
 %type <token> non_condition_statement compound_statement inline_assembly
 %type <token> variable_initialize variable_declaration loop_statement function
 %type <token> declaration declaration_list asm_include extern_variable extern_function
+%type <token> switch_case switch_case_list switch_statement
 %type <str_list> string_list string_list_nullable
 %type <character> REGISTER
 %type <alocation> asm_location
@@ -171,6 +172,7 @@ non_condition_statement
     | "return" expression ';'  { $$ = token_return(@$, $2); }
     | "return" ';'             { $$ = token_return(@$, NULL); }
     | error ';'                { $$ = NULL; }
+    | switch_statement
     ;
 
 condition_statement
@@ -183,6 +185,23 @@ loop_statement
     : "while" paren_expression statement  { $$ = token_loop(@$, $2, $3, false); }
     | "do" statement "while" paren_expression ';'  { $$ = token_loop(@$, $4, $2, true); }
     | "for" '(' statement expression ';' expression ')' statement { $$ = token_for(@$, $3, $4, $6, $8); }
+    ;
+
+switch_statement
+    : "switch" paren_expression '{' switch_case_list '}'  { $$ = token_switch(@$, $2, $4); }
+    ;
+
+switch_case_list
+    : switch_case
+    | switch_case_list switch_case  { $$ = cat_token($1, $2); }
+    | switch_case_list "else" statement ';'  { $$ = cat_token($1, token_compound(@3, $3)); }
+    ;
+
+switch_case
+    : "case" paren_expression statement ';'     { $$ = token_case(@$, $2, $3, false); }
+    | "case" paren_expression ';'               { $$ = token_case(@$, $2, NULL, false); }
+    | "case" paren_expression statement ','     { $$ = token_case(@$, $2, $3, true); }
+    | "case" paren_expression ','               { $$ = token_case(@$, $2, NULL, true); }
     ;
 
 variable_initialize

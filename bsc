@@ -12,15 +12,16 @@ Options:
   -u, --upload
   -s, --stdin
   -y, --symbols
-  -v, --version"
+  -v, --version
+  -r, --ram"
 
-VERSION="bsc 1.0"
+VERSION="bsc 1.1"
 
-BSTDLIB="$HOME/src/spdr-software/stdlib/bs"
-ASMSTDLIB="$HOME/src/spdr-software/stdlib/asm/"
+BSTDLIB="$HOME/src/spdr-software/bs/stdlib/"
+ASMSTDLIB="$HOME/src/spdr-software/asm/stdlib/"
 
-SHORT="o:,l:,s,u,h,v,n,a,c,y"
-LONG="output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols"
+SHORT="o:,l:,s,u,h,v,n,a,c,y,r"
+LONG="output:,stdlib:,stdin,upload,help,version,assemble,compile,symbols,ram"
 OPTS=$(getopt -n bsc --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 if [ "$?" != "0" ]
@@ -69,6 +70,10 @@ do
             ;;
         -y | --symbols )
             SYMBOLS_FLAG="-y"
+            shift
+            ;;
+        -r | --ram )
+            RAM_FLAG="-r"
             shift
             ;;
         -- )
@@ -131,7 +136,7 @@ fi
 
 if  [ -n "$ASSEMBLE" ]
 then
-    spas "$ASMFILE" $SYMBOLS_FLAG -l "$ASMSTDLIB"
+    spas "$ASMFILE" $RAM_FLAG $SYMBOLS_FLAG -l "$ASMSTDLIB"
 else
     cat "$ASMFILE"
 fi > $COMPILETMP

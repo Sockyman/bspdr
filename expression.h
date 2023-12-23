@@ -60,6 +60,7 @@ struct ExprOperation
     Operation operation;
     struct Expression *x;
     struct Expression *y;
+    bool is_array_access;
 };
 
 struct ExprFunction
@@ -97,6 +98,8 @@ Expression *expression_string(Trace trace, char *str);
 Expression *expression_alloc_array(Trace trace, Expression *size);
 Expression *expression_literal_array(Trace trace, Expression *contents);
 void free_expression(Expression *expr);
+
+char *get_operator(enum Operation operation);
 
 int operation(Operation operation, int x, int y);
 bool try_reduce(Expression *expr, int *output);

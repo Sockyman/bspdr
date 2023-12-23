@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "c_compile.h"
+
 extern Token *g_token;
 
 void put_file(FILE *file)
@@ -32,6 +34,9 @@ int main(int argc, char **argv)
 
     yyparse();
     compile_program(&ctx, g_token);
+
+    //c_compile_program(g_token);
+
     if (g_token)
         free_token(g_token);
     free_filenames();

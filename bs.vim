@@ -3,7 +3,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-syn keyword bsKeyword let return if else while do for goto arr extern include_asm
+syn keyword bsKeyword let return if else while do for goto arr extern include_asm switch case
 syn keyword bsRegister A X Y
 
 syn match bsDoubleQuoteEscape /\\[\\"$\n]/ contained

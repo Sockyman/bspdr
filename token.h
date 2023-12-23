@@ -23,6 +23,8 @@ typedef enum TokenType
     TOK_GOTO,
     TOK_LABEL,
     TOK_RETURN,
+    TOK_SWITCH,
+    TOK_CASE,
     TOK_ASSEMBLY,
     TOK_COMPOUND,
     TOK_INCLUDE_ASM,
@@ -41,6 +43,7 @@ typedef struct Token
     struct Token *statements_other;
     struct Token *next;
     bool is_extern;
+    bool continue_after;
     char *extern_name;
     AsmPlace *asm_params;
     AsmPlace *asm_return;
@@ -68,6 +71,9 @@ Token *token_function(Trace trace, char *name, StringList *parameters, Token *st
 Token *token_extern_function(Trace trace, char *name, char *extern_name, AsmPlace *params, AsmPlace *return_place);
 
 Token *token_include_asm(Trace trace, char *file_name);
+
+Token *token_switch(Trace trace, Expression *expr, Token *statements);
+Token *token_case(Trace trace, Expression *expr, Token *statements, bool continue_after);
 
 Token *cat_token(Token *token_1, Token *token_2);
 

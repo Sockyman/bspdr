@@ -83,6 +83,12 @@ void compile(Ctx *ctx, Token *token)
             case TOK_EXTERN_FUNCTION:
                 compile_extern_function(ctx, t);
                 break;
+            case TOK_SWITCH:
+                compile_switch(ctx, t);
+                break;
+            case TOK_CASE:
+                fprintf(stderr, "Token case only valid within token switch.\n");
+                break;
         }
         t = t->next;
     }
@@ -454,6 +460,64 @@ void compile_return(Ctx *ctx, Token *token)
         compile_expression(ctx, token->expr, target_exval(exval_return()));
 
     putins_imp(ctx, "ret");
+}
+
+void compile_switch(Ctx *ctx, Token *token)
+{
+    int end_lbl = anon_label(ctx);
+    int default_lbl = anon_label(ctx);
+    int label_i0 = default_lbl + 1;
+
+    Exval goal = resolve(ctx, token->expr, target_any());
+    putins_exval(ctx, "ldx", goal, 0);
+    putins_exval(ctx, "ldy", goal, 1);
+
+    Token *current = token->statements;
+    while (current && current->type == TOK_CASE)
+    {
+        int comp_lbl = anon_label(ctx);
+        int skip_lbl = anon_label(ctx);
+
+        Exval comparison = resolve(ctx, current->expr, target_any());
+        if (comparison.type != EX_IMMEDIATE)
+        {
+            error(&current->trace, "case is not assemble time constant.");
+            current = current->next;
+            continue;
+        }
+
+        putins_imp(ctx, "txa");
+        putins_exval(ctx, "cmp", comparison, 0);
+        putins_dir_anon_label(ctx, "jnz", skip_lbl);
+        putins_imp(ctx, "tya");
+        putins_exval(ctx, "cmpc", comparison, 1);
+        putins_dir_anon_label(ctx, "jz", comp_lbl);
+        putlabeln(ctx, skip_lbl);
+
+        current = current->next;
+    }
+    putins_dir_anon_label(ctx, "jmp", default_lbl);
+
+    current = token->statements;
+    int case_count = 0;
+    while (current && current->type == TOK_CASE)
+    {
+        int comp_lbl = case_count++ * 2 + label_i0;
+        putlabeln(ctx, comp_lbl);
+        compile(ctx, current->statements);
+        if (!current->continue_after)
+        {
+            putins_dir_anon_label(ctx, "jmp", end_lbl);
+        }
+        current = current->next;
+    }
+
+    putlabeln(ctx, default_lbl);
+    if (current)
+    {
+        compile(ctx, current->statements);
+    }
+    putlabeln(ctx, end_lbl);
 }
 
 void compile_assembly(Ctx *ctx, Token *token)
