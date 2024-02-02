@@ -4,6 +4,13 @@
 #include "expression.h"
 #include "context.h"
 
+typedef enum {
+    FLAG_ZERO,
+    FLAG_NOT_ZERO,
+    FLAG_CARRY,
+    FLAG_NOT_CARRY,
+} Flag;
+
 typedef enum ExvalType
 {
     EX_DIRECT,
@@ -13,6 +20,7 @@ typedef enum ExvalType
     EX_NONE,
     EX_RETURN,
     EX_PARAMETER,
+    EX_FLAG,
 } ExvalType;
 
 struct ExvalParamValue
@@ -26,12 +34,14 @@ union ExvalValue
     Expression *expression;
     int index;
     struct ExvalParamValue param;
+    Flag flag;
 };
 
 typedef enum ExvalDataType
 {
     EX_INDEX,
     EX_EXPRESSION,
+    EX_DATA_FLAG,
 } ExvalDataType;
 
 typedef struct Exval
@@ -66,6 +76,7 @@ Exval exval_none();
 Exval exval_param(char *function, int index);
 Exval exval_return();
 Exval exval_section(int index);
+Exval exval_flag(Flag flag);
 
 bool is_constexpr(Exval *x, Exval *y, Exval *condition, Operation operation);
 

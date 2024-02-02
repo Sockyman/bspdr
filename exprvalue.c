@@ -81,6 +81,13 @@ Exval exval_return()
     return exval;
 }
 
+Exval exval_flag(Flag flag)
+{
+    Exval exval = { EX_FLAG, EX_DATA_FLAG };
+    exval.value.flag = flag;
+    return exval;
+}
+
 ExTarget target_any()
 {
     ExTarget target = { ANY };
