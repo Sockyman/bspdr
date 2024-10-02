@@ -17,7 +17,7 @@ Options:
 
 VERSION="bsc 1.1"
 
-BSTDLIB="$HOME/src/spdr-software/bs/stdlib/"
+BSTDLIB="$HOME/src/spdr-software/bspdr/stdlib/"
 ASMSTDLIB="$HOME/src/spdr-software/asm/stdlib/"
 
 SHORT="o:,l:,s,u,h,v,n,a,c,y,r"
